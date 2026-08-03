@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
+
+<title>HashRoom V2</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<header class="header">
+
+<div class="brand">
+
+<img src="assets/images/logo.png" class="logo">
+
+<div>
+
+<h2>HASH ROOM</h2>
+
+<p>
+Welcome
+<span id="username">
+Loading...
+</span>
+</p>
+
+</div>
+
+</div>
+
+<div class="user-box">
+
+<strong id="plan">
+No Plan
+</strong>
+
+<br>
+
+<small>
+
+ID :
+<span id="userid">
+0
+</span>
+
+</small>
+
+</div>
+
+</header>
+
+<div class="card">
+
+<div class="top-card">
+
+<h2>Total Balance</h2>
+
+<h1 id="balance">
+
+0.00000000 BTC
+
+</h1>
+
+<p id="usd">
+
+≈ $0.00
+
+</p>
+
+</div>
+
+<div class="actions">
+
+<button id="depositBtn">
+
+Deposit
+
+</button>
+
+<button id="withdrawBtn">
+
+Withdraw
+
+</button>
+
+</div>
+
+</div>
+
+  <div class="stats">
+
+<div class="stat">
+<h3 id="hashrate">0 TH/s</h3>
+<p>Hash Rate</p>
+</div>
+
+<div class="stat">
+<h3 id="daily">0 BTC</h3>
+<p>Daily Output</p>
+</div>
+
+<div class="stat">
+<h3 id="earned">0 BTC</h3>
+<p>Total Earned</p>
+</div>
+
+</div>
+
+<div class="miner-card">
+
+<img src="assets/images/miner.png" width="220">
+
+<p id="mineStatus" style="color:#38ff6b;">
+● Waiting Admin
+</p>
+
+<button id="startBtn" disabled>
+
+⚡ Waiting Approve
+
+</button>
+
+</div>
+
+<nav class="bottom-nav">
+
+<a href="index.html" class="nav-item active">
+<span>🏠</span>
+<small>Home</small>
+</a>
+
+<a href="plans.html" class="nav-item">
+<span>📦</span>
+<small>Plans</small>
+</a>
+
+<a href="mining.html" class="nav-item">
+<span>⛏️</span>
+<small>Mining</small>
+</a>
+
+<a href="wallet.html" class="nav-item">
+<span>👛</span>
+<small>Wallet</small>
+</a>
+
+<a href="referral.html" class="nav-item">
+<span>👥</span>
+<small>Referral</small>
+</a>
+
+</nav>
+
+ <script type="module">
+
+import "./firebase.js";
+import "./script.js";
+
+</script>
+
+</div>
+
+</body>
+
+</html> 
