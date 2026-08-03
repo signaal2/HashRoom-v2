@@ -260,6 +260,9 @@ function startMining() {
 
         document.getElementById("balance").innerText = balance.toFixed(8) + " BTC";
 
+        document.getElementById("plan").innerText = data.plan;
+document.getElementById("status").innerText = data.status;
+        
     },1000);
 
 }
