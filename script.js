@@ -263,3 +263,5 @@ function startMining() {
     },1000);
 
 }
+
+loadUser();
