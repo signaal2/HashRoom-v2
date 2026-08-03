@@ -229,3 +229,37 @@ await resumeMining();
 });
 
 console.log("HashRoom V2 Ready");
+
+function startMining() {
+
+    setInterval(async () => {
+
+        const ref = doc(db, "users", uid);
+
+        const snap = await getDoc(ref);
+
+        const data = snap.data();
+
+        let earned = Number(data.earned);
+
+        let balance = Number(data.balance);
+
+        earned += 0.00000250;
+
+        balance += 0.00000250;
+
+        await updateDoc(ref, {
+
+            earned: earned.toFixed(8),
+
+            balance: balance.toFixed(8)
+
+        });
+
+        document.getElementById("earned").innerText = earned.toFixed(8) + " BTC";
+
+        document.getElementById("balance").innerText = balance.toFixed(8) + " BTC";
+
+    },1000);
+
+}
