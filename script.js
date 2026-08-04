@@ -153,7 +153,6 @@ startBtn.addEventListener("click", async () => {
     }
 });
 
-startBtn.onclick = async () => {
 
 if (!approved) return;
 
