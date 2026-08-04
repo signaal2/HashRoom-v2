@@ -154,19 +154,7 @@ startBtn.addEventListener("click", async () => {
 });
 
 
-if (!approved) return;
 
-if (!mining) {
-
-await startMining();
-
-} else {
-
-await stopMining();
-
-}
-
-};
 
 async function resumeMining() {
 
