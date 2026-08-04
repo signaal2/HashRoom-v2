@@ -145,6 +145,14 @@ await saveUser();
 
 }
 
+startBtn.addEventListener("click", async () => {
+    if (mining) {
+        await stopMining();
+    } else {
+        await startMining();
+    }
+});
+
 startBtn.onclick = async () => {
 
 if (!approved) return;
