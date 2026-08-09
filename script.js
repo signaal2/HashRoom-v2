@@ -1,227 +1,169 @@
-import {
-db,
-doc,
-getDoc,
-setDoc,
-updateDoc
-} from "./firebase.js";
+import { SUPABASE_URL, SUPABASE_KEY } from "./firebase.js";
 
-const tg = window.Telegram.WebApp;
-tg.expand();
+const tg = window.Telegram?.WebApp;
+tg?.expand();
 
-const user = tg.initDataUnsafe.user;
+const fallbackUser = { id: 0, first_name: "Guest", username: "" };
+const user = tg?.initDataUnsafe?.user || fallbackUser;
 
-let mining = false;
-let miningInterval = null;
-let balance = 0;
-let approved = false;
+const $ = (id) => document.getElementById(id);
+const balanceEl = $("balance");
+const usdEl = $("usd");
+const startBtn = $("startBtn");
+const planEl = $("plan");
+const usernameEl = $("username");
+const useridEl = $("userid");
+const statusEl = $("mineStatus");
+const hashrateEl = $("hashrate");
+const dailyEl = $("daily");
+const earnedEl = $("earned");
 
-const balanceEl = document.getElementById("balance");
-const startBtn = document.getElementById("startBtn");
-const planEl = document.getElementById("plan");
-const usernameEl = document.getElementById("username");
-const useridEl = document.getElementById("userid");
+if (usernameEl) usernameEl.textContent = user.first_name || user.username || "User";
+if (useridEl) useridEl.textContent = String(user.id);
 
-usernameEl.innerHTML = user.first_name;
-useridEl.innerHTML = user.id;
+let profile = null;
+let timer = null;
+let loading = false;
 
-const userRef = doc(db, "users", String(user.id));
+const headers = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json"
+};
 
-async function loadUser() {
+async function api(path, options = {}) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: { ...headers, ...(options.headers || {}) }
+  });
+  const text = await response.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (!response.ok) throw new Error(data?.message || data?.hint || text || `HTTP ${response.status}`);
+  return data;
+}
 
-const snap = await getDoc(userRef);
+async function getUser() {
+  const rows = await api(`users?id=eq.${encodeURIComponent(user.id)}&select=*`);
+  return rows?.[0] || null;
+}
 
-if (!snap.exists()) {
+async function createUser() {
+  const referrer = new URLSearchParams(location.search).get("ref") || null;
+  const row = {
+    id: Number(user.id),
+    username: user.username || "",
+    first_name: user.first_name || "",
+    balance: 0,
+    approved: false,
+    mining: false,
+    plan: "",
+    referrer: referrer && /^\d+$/.test(referrer) ? Number(referrer) : null,
+    referrals: 0
+  };
+  await api("users", {
+    method: "POST",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify(row)
+  });
+  return row;
+}
 
-await setDoc(userRef, {
+async function saveUser(patch) {
+  await api(`users?id=eq.${encodeURIComponent(user.id)}`, {
+    method: "PATCH",
+    headers: { Prefer: "return=minimal" },
+    body: JSON.stringify(patch)
+  });
+  profile = { ...profile, ...patch };
+}
 
-id: user.id,
+function render() {
+  if (!profile) return;
+  const balance = Number(profile.balance || 0);
+  const approved = Boolean(profile.approved);
+  const mining = Boolean(profile.mining);
+  const plan = profile.plan || "No Plan";
 
-username: user.username || "",
+  if (balanceEl) balanceEl.textContent = `${balance.toFixed(8)} BTC`;
+  if (usdEl) usdEl.textContent = `≈ $${(balance * 60000).toFixed(2)}`;
+  if (planEl) planEl.textContent = plan;
+  if (hashrateEl) hashrateEl.textContent = mining ? "100 TH/s" : "0 TH/s";
+  if (dailyEl) dailyEl.textContent = mining ? "0.00043200 BTC" : "0 BTC";
+  if (earnedEl) earnedEl.textContent = `${balance.toFixed(8)} BTC`;
 
-name: user.first_name,
+  if (!approved) {
+    if (startBtn) { startBtn.disabled = true; startBtn.textContent = "Waiting Admin"; }
+    if (statusEl) statusEl.textContent = "● Waiting Admin";
+    stopTimer();
+    return;
+  }
 
-balance: 0,
+  if (startBtn) startBtn.disabled = false;
+  if (mining) {
+    if (startBtn) startBtn.textContent = "⛏ Mining...";
+    if (statusEl) statusEl.textContent = "● Mining Active";
+    startTimer();
+  } else {
+    if (startBtn) startBtn.textContent = "⚡ Start Mining";
+    if (statusEl) statusEl.textContent = "● Ready";
+    stopTimer();
+  }
+}
 
-approved: false,
+function startTimer() {
+  if (timer || !profile?.approved || !profile?.mining) return;
+  timer = setInterval(async () => {
+    if (loading) return;
+    loading = true;
+    try {
+      const next = Number(profile.balance || 0) + 0.00000001;
+      await saveUser({ balance: next, mining: true });
+      render();
+    } catch (e) {
+      console.error("Mining update failed:", e);
+    } finally { loading = false; }
+  }, 2000);
+}
 
-mining: false,
+function stopTimer() {
+  if (timer) clearInterval(timer);
+  timer = null;
+}
 
-hashrate: 0,
+async function toggleMining() {
+  if (!profile?.approved) return;
+  try {
+    if (profile.mining) await saveUser({ mining: false });
+    else await saveUser({ mining: true });
+    render();
+  } catch (e) {
+    console.error(e);
+    alert("Mining update failed. Check Supabase permissions.");
+  }
+}
 
-plan: "",
+async function load() {
+  try {
+    profile = await getUser();
+    if (!profile) profile = await createUser();
+    render();
+  } catch (e) {
+    console.error(e);
+    if (statusEl) statusEl.textContent = "● Database Error";
+    if (startBtn) { startBtn.disabled = true; startBtn.textContent = "Database Error"; }
+  }
+}
 
-lastUpdate: Date.now()
+startBtn?.addEventListener("click", toggleMining);
 
+$("depositBtn")?.addEventListener("click", () => {
+  location.href = "plans.html";
 });
 
-balance = 0;
-
-approved = false;
-
-return;
-
-}
-
-const data = snap.data();
-
-balance = data.balance || 0;
-
-approved = data.approved || false;
-
-mining = data.mining || false;
-
-balanceEl.innerHTML = balance.toFixed(8) + " BTC";
-
-planEl.innerHTML = data.plan || "No Plan";
-
-if (approved) {
-
-startBtn.disabled = false;
-
-startBtn.innerHTML = "⚡ Start Mining";
-
-} else {
-
-startBtn.disabled = true;
-
-startBtn.innerHTML = "Waiting Admin";
-
-}
-
-}
-
-async function saveUser() {
-
-await updateDoc(userRef, {
-
-balance: balance,
-
-approved: approved,
-
-mining: mining,
-
-lastUpdate: Date.now()
-
+$("withdrawBtn")?.addEventListener("click", () => {
+  location.href = "wallet.html";
 });
 
-}
-
-async function startMining() {
-
-if (!approved) return;
-
-if (mining) return;
-
-mining = true;
-
-startBtn.innerHTML = "⛏ Mining...";
-
-await saveUser();
-
-miningInterval = setInterval(async () => {
-
-balance += 0.00000001;
-
-balanceEl.innerHTML = balance.toFixed(8) + " BTC";
-
-await saveUser();
-
-}, 2000);
-
-}
-
-async function stopMining() {
-
-mining = false;
-
-clearInterval(miningInterval);
-
-miningInterval = null;
-
-startBtn.innerHTML = "⚡ Start Mining";
-
-await saveUser();
-
-}
-
-startBtn.addEventListener("click", async () => {
-    if (mining) {
-        await stopMining();
-    } else {
-        await startMining();
-    }
-});
-
-
-
-
-async function resumeMining() {
-
-const snap = await getDoc(userRef);
-
-if (!snap.exists()) return;
-
-const data = snap.data();
-
-balance = data.balance || 0;
-approved = data.approved || false;
-mining = data.mining || false;
-
-balanceEl.innerHTML = balance.toFixed(8) + " BTC";
-
-if (approved) {
-
-startBtn.disabled = false;
-
-if (mining) {
-
-startBtn.innerHTML = "⛏ Mining...";
-
-miningInterval = setInterval(async () => {
-
-balance += 0.00000001;
-
-balanceEl.innerHTML = balance.toFixed(8) + " BTC";
-
-await saveUser();
-
-}, 2000);
-
-} else {
-
-startBtn.innerHTML = "⚡ Start Mining";
-
-}
-
-} else {
-
-startBtn.disabled = true;
-startBtn.innerHTML = "Waiting Admin";
-
-}
-
-}
-
-window.addEventListener("beforeunload", async () => {
-
-await saveUser();
-
-});
-
-setInterval(async () => {
-
-await resumeMining();
-
-}, 5000);
-
-document.addEventListener("DOMContentLoaded", async () => {
-
-await loadUser();
-
-await resumeMining();
-
-});
-
-console.log("HashRoom V2 Ready");
-
+window.addEventListener("pagehide", stopTimer);
+load();
