@@ -1,8 +1,101 @@
-import {SUPABASE_URL,SUPABASE_KEY} from './firebase.js';
-const tg=window.Telegram?.WebApp;tg?.expand();const u=tg?.initDataUnsafe?.user||{id:0};
-// Set your Telegram numeric ID here once.
-const ADMIN_ID=0;
-const h={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'};
-const $=x=>document.getElementById(x);
-async function api(path,opt={}){const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{...opt,headers:{...h,...(opt.headers||{})}});const t=await r.text();if(!r.ok)throw Error(t);return t?JSON.parse(t):null}
-async function load(){if(Number(u.id)!==ADMIN_ID){$('list').textContent='Not authorized';return}const rows=await api('purchase_requests?status=eq.pending&select=*');$('list').innerHTML=rows.length?'':'No pending requests';for(const x of rows){const d=document.createElement('div');d.className='item';d.innerHTML=`User ${x.user_id} — ${x.plan} — $${x.amount} <button data-id="${x.id}">Approve</button>`;d.querySelector('button').onclick=async()=>{await api(`purchase_requests?id=eq.${x.id}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:'approved'})});await api(`users?id=eq.${x.user_id}`,{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({approved:true,mining:true,plan:x.plan})});load()};$('list').appendChild(d)}}load();
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL =
+  "https://rcftsmwuynpqrrosfkap.supabase.co";
+
+const SUPABASE_ANON_KEY =
+  "کل anon key خودت را اینجا بگذار";
+
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+const paymentsDiv = document.getElementById("payments");
+
+async function loadUsers() {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    paymentsDiv.innerHTML =
+      `<p>Database Error: ${error.message}</p>`;
+    return;
+  }
+
+  paymentsDiv.innerHTML = "";
+
+  for (const user of data || []) {
+    paymentsDiv.innerHTML += `
+      <div class="card">
+        <h3>${user.plan || "No Plan"}</h3>
+
+        <p>
+          User:
+          <b>${user.username || user.first_name || user.id}</b>
+        </p>
+
+        <p>Balance: ${user.balance || 0}</p>
+        <p>Approved: <b>${user.approved ? "YES" : "NO"}</b></p>
+        <p>Mining: <b>${user.mining ? "ACTIVE" : "OFF"}</b></p>
+
+        <button onclick="approveUser(${user.id})">
+          Approve
+        </button>
+
+        <button onclick="rejectUser(${user.id})">
+          Reject
+        </button>
+      </div>
+    `;
+  }
+}
+
+window.approveUser = async function (id) {
+  try {
+    const { error } = await supabase
+      .from("users")
+      .update({
+        approved: true,
+        mining: true
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    alert("Plan approved and mining started ✅");
+
+    await loadUsers();
+
+  } catch (error) {
+    console.error(error);
+    alert("Approve Error:\n" + error.message);
+  }
+};
+
+window.rejectUser = async function (id) {
+  try {
+    const { error } = await supabase
+      .from("users")
+      .update({
+        approved: false,
+        mining: false
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    alert("User rejected");
+
+    await loadUsers();
+
+  } catch (error) {
+    console.error(error);
+    alert("Reject Error:\n" + error.message);
+  }
+};
+
+loadUsers();
