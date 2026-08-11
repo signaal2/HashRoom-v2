@@ -1,1 +1,205 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mining</title><link rel="stylesheet" href="style.css"><script src="https://telegram.org/js/telegram-web-app.js"></script></head><body><main class="container"><div class="panel"><h2>⛏️ Mining</h2><p id="state">Loading...</p><a href="index.html"><button>Back to Home</button></a></div><nav class="bottom-nav"><a href="index.html" class="nav-item">🏠<small>Home</small></a><a href="plans.html" class="nav-item">📦<small>Plans</small></a><a href="mining.html" class="nav-item active">⛏️<small>Mining</small></a><a href="wallet.html" class="nav-item">👛<small>Wallet</small></a><a href="referral.html" class="nav-item">👥<small>Referral</small></a></nav></main><script type="module" src="mining.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
+
+<title>Mining</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>⛏ Mining</h2>
+
+<div class="card">
+
+<h3>Cloud Mining</h3>
+
+<p id="status">Checking...</p>
+
+<p>
+Balance:
+<strong id="balance">0.00000000 BTC</strong>
+</p>
+
+<button id="startBtn">
+Start Mining
+</button>
+
+</div>
+
+</div>
+
+<nav class="bottom-nav">
+
+<a href="index.html">🏠<br>Home</a>
+
+<a href="plans.html">📦<br>Plans</a>
+
+<a href="mining.html">⛏<br>Mining</a>
+
+<a href="wallet.html">👛<br>Wallet</a>
+
+<a href="referral.html">👥<br>Referral</a>
+
+</nav>
+
+<script>
+
+const SUPABASE_URL =
+"https://rcftsmwuynpqrrosfkap.supabase.co";
+
+const SUPABASE_KEY =
+"YOUR_SUPABASE_ANON_KEY";
+
+const tg = window.Telegram.WebApp;
+
+tg.ready();
+tg.expand();
+
+const user = tg.initDataUnsafe.user;
+
+if (!user) {
+  alert("Open HashRoom inside Telegram");
+  throw new Error("Telegram user not found");
+}
+
+const statusEl =
+document.getElementById("status");
+
+const balanceEl =
+document.getElementById("balance");
+
+const startBtn =
+document.getElementById("startBtn");
+
+let timer = null;
+
+async function getUser() {
+
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/users?telegram_id=eq.${user.id}&select=*`,
+    {
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization:
+          `Bearer ${SUPABASE_KEY}`
+      }
+    }
+  );
+
+  if (!response.ok)
+    throw new Error(await response.text());
+
+  const users = await response.json();
+
+  return users[0] || null;
+}
+
+async function saveBalance(balance) {
+
+  await fetch(
+    `${SUPABASE_URL}/rest/v1/users?telegram_id=eq.${user.id}`,
+    {
+      method: "PATCH",
+
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization:
+          `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal"
+      },
+
+      body: JSON.stringify({
+        balance: balance
+      })
+    }
+  );
+}
+
+async function checkMining() {
+
+  const data = await getUser();
+
+  if (!data) {
+
+    statusEl.textContent =
+      "User not registered yet";
+
+    startBtn.disabled = true;
+
+    return;
+  }
+
+  balanceEl.textContent =
+    Number(data.balance || 0)
+      .toFixed(8) + " BTC";
+
+  if (
+    data.approved === true &&
+    data.mining === true
+  ) {
+
+    statusEl.textContent =
+      "🟢 Mining Active";
+
+    startBtn.textContent =
+      "Mining...";
+
+    startBtn.disabled = true;
+
+    startMining(data);
+
+  } else {
+
+    statusEl.textContent =
+      "🟡 Waiting for admin approval";
+
+    startBtn.disabled = true;
+  }
+}
+
+function startMining(data) {
+
+  if (timer) return;
+
+  let balance =
+    Number(data.balance || 0);
+
+  timer = setInterval(async () => {
+
+    /*
+      مقدار کوچک آزمایشی برای نمایش Mining.
+      برای استخراج واقعی باید منبع درآمد واقعی
+      و سیستم پرداخت/تسویه مستقل اضافه شود.
+    */
+
+    balance += 0.00000001;
+
+    balanceEl.textContent =
+      balance.toFixed(8) + " BTC";
+
+    await saveBalance(balance);
+
+  }, 10000);
+}
+
+startBtn.onclick =
+checkMining;
+
+checkMining();
+
+</script>
+
+</body>
+  </html>
