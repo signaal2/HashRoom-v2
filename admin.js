@@ -1,101 +1,242 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
 const SUPABASE_URL =
   "https://rcftsmwuynpqrrosfkap.supabase.co";
 
-const SUPABASE_ANON_KEY =
-  "کل anon key خودت را اینجا بگذار";
-
-const supabase = createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
 
 const paymentsDiv = document.getElementById("payments");
 
-async function loadUsers() {
-  const { data, error } = await supabase
-    .from("users")
-    .select("*")
-    .order("created_at", { ascending: false });
+async function api(path, options = {}) {
 
-  if (error) {
-    console.error(error);
-    paymentsDiv.innerHTML =
-      `<p>Database Error: ${error.message}</p>`;
-    return;
+  const response = await fetch(
+    SUPABASE_URL + "/rest/v1/" + path,
+    {
+      ...options,
+
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(await response.text());
   }
 
-  paymentsDiv.innerHTML = "";
+  if (response.status === 204) return null;
 
-  for (const user of data || []) {
-    paymentsDiv.innerHTML += `
-      <div class="card">
-        <h3>${user.plan || "No Plan"}</h3>
+  return response.json();
+}
+
+async function loadPayments() {
+
+  try {
+
+    const payments = await api(
+      "payments?select=*&order=created_at.desc"
+    );
+
+    paymentsDiv.innerHTML = "";
+
+    if (!payments.length) {
+      paymentsDiv.innerHTML =
+        "<p>No payment requests.</p>";
+      return;
+    }
+
+    payments.forEach(payment => {
+
+      const card = document.createElement("div");
+
+      card.className = "card";
+
+      card.innerHTML = `
+        <h3>${payment.plan}</h3>
 
         <p>
           User:
-          <b>${user.username || user.first_name || user.id}</b>
+          ${payment.first_name || ""}
+          ${payment.username ? "@" + payment.username : ""}
         </p>
 
-        <p>Balance: ${user.balance || 0}</p>
-        <p>Approved: <b>${user.approved ? "YES" : "NO"}</b></p>
-        <p>Mining: <b>${user.mining ? "ACTIVE" : "OFF"}</b></p>
+        <p>Telegram ID: ${payment.telegram_id}</p>
 
-        <button onclick="approveUser(${user.id})">
+        <p>Price: ${payment.price} USDT</p>
+
+        <p>Status:
+          <b>${payment.status}</b>
+        </p>
+
+        <button
+          ${payment.status !== "pending" ? "disabled" : ""}
+          data-id="${payment.id}"
+          class="approve-btn">
           Approve
         </button>
 
-        <button onclick="rejectUser(${user.id})">
+        <button
+          ${payment.status !== "pending" ? "disabled" : ""}
+          data-id="${payment.id}"
+          class="reject-btn">
           Reject
         </button>
-      </div>
-    `;
+      `;
+
+      paymentsDiv.appendChild(card);
+    });
+
+    document.querySelectorAll(".approve-btn")
+      .forEach(btn => {
+        btn.onclick = () =>
+          approvePayment(btn.dataset.id);
+      });
+
+    document.querySelectorAll(".reject-btn")
+      .forEach(btn => {
+        btn.onclick = () =>
+          rejectPayment(btn.dataset.id);
+      });
+
+  } catch (error) {
+
+    console.error(error);
+
+    paymentsDiv.innerHTML =
+      `<p>Error: ${error.message}</p>`;
   }
 }
 
-window.approveUser = async function (id) {
+async function approvePayment(paymentId) {
+
   try {
-    const { error } = await supabase
-      .from("users")
-      .update({
-        approved: true,
-        mining: true
-      })
-      .eq("id", id);
 
-    if (error) throw error;
+    const payments = await api(
+      `payments?id=eq.${paymentId}&select=*`
+    );
 
-    alert("Plan approved and mining started ✅");
+    if (!payments.length) {
+      alert("Payment not found");
+      return;
+    }
 
-    await loadUsers();
+    const payment = payments[0];
+
+    /*
+      پیدا کردن کاربر واقعی با telegram_id
+    */
+
+    const users = await api(
+      `users?telegram_id=eq.${payment.telegram_id}&select=*`
+    );
+
+    let user;
+
+    if (users.length) {
+
+      user = users[0];
+
+    } else {
+
+      const created = await api(
+        "users?select=*",
+        {
+          method: "POST",
+
+          body: JSON.stringify({
+            telegram_id: payment.telegram_id,
+            username: payment.username,
+            first_name: payment.first_name,
+            balance: 0,
+            approved: true,
+            mining: true,
+            plan: payment.plan,
+            referrals: 0,
+            referral_earned: 0
+          })
+        }
+      );
+
+      user = created[0];
+    }
+
+    /*
+      فعال کردن Mining
+    */
+
+    await api(
+      `users?id=eq.${user.id}`,
+      {
+        method: "PATCH",
+
+        body: JSON.stringify({
+          approved: true,
+          mining: true,
+          plan: payment.plan
+        })
+      }
+    );
+
+    /*
+      تایید پرداخت
+    */
+
+    await api(
+      `payments?id=eq.${paymentId}`,
+      {
+        method: "PATCH",
+
+        body: JSON.stringify({
+          status: "approved",
+          approved_at: new Date().toISOString()
+        })
+      }
+    );
+
+    alert("Plan approved ✅\nMining activated.");
+
+    loadPayments();
 
   } catch (error) {
+
     console.error(error);
-    alert("Approve Error:\n" + error.message);
+
+    alert(
+      "Approve Error:\n" +
+      error.message
+    );
   }
-};
+}
 
-window.rejectUser = async function (id) {
+async function rejectPayment(paymentId) {
+
   try {
-    const { error } = await supabase
-      .from("users")
-      .update({
-        approved: false,
-        mining: false
-      })
-      .eq("id", id);
 
-    if (error) throw error;
+    await api(
+      `payments?id=eq.${paymentId}`,
+      {
+        method: "PATCH",
 
-    alert("User rejected");
+        body: JSON.stringify({
+          status: "rejected"
+        })
+      }
+    );
 
-    await loadUsers();
+    alert("Payment rejected.");
+
+    loadPayments();
 
   } catch (error) {
-    console.error(error);
-    alert("Reject Error:\n" + error.message);
-  }
-};
 
-loadUsers();
+    alert(
+      "Reject Error:\n" +
+      error.message
+    );
+  }
+}
+
+loadPayments();
+
+setInterval(loadPayments, 10000);
