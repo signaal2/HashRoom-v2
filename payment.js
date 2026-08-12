@@ -1,7 +1,8 @@
 const SUPABASE_URL =
   "https://rcftsmwuynpqrrosfkap.supabase.co";
 
-const SUPABASE_KEY = "sb_publishable_xHnveIjt43xV1tA4683_HA_qZ8sS2PC";
+const SUPABASE_KEY =
+  "sb_publishable_xHnveIjt43xV1tA4683_HA_qZ8sS2PC";
 
 const tg = window.Telegram?.WebApp;
 
@@ -23,35 +24,13 @@ const plans = {
     name: "Basic",
     price: 130
   },
-
-  starter: {
-    name: "Starter",
-    price: 320
-  },
-
   pro: {
     name: "Pro",
-    price: 590
+    price: 250
   },
-
-  advanced: {
-    name: "Advanced",
-    price: 540
-  },
-
-  premium: {
-    name: "Premium",
-    price: 860
-  },
-
-  elite: {
-    name: "Elite",
-    price: 860
-  },
-
   vip: {
     name: "VIP",
-    price: 1040
+    price: 500
   }
 };
 
@@ -62,137 +41,71 @@ if (!plan) {
   throw new Error("Invalid plan");
 }
 
+const planName = document.getElementById("planName");
+const planPrice = document.getElementById("planPrice");
+const paidBtn = document.getElementById("paidBtn");
 
-/*
---------------------------------
-نمایش اطلاعات پلن
---------------------------------
-*/
-
-const planNameEl =
-  document.getElementById("planName");
-
-const planPriceEl =
-  document.getElementById("planPrice");
-
-if (planNameEl) {
-  planNameEl.textContent = plan.name;
+if (planName) {
+  planName.textContent = plan.name;
 }
 
-if (planPriceEl) {
-  planPriceEl.textContent =
-    `${plan.price} USDT`;
+if (planPrice) {
+  planPrice.textContent = `${plan.price} USDT`;
 }
 
+paidBtn?.addEventListener("click", async () => {
 
-/*
---------------------------------
-دکمه پرداخت
---------------------------------
-*/
+  paidBtn.disabled = true;
+  paidBtn.textContent = "Sending...";
 
-const paidBtn =
-  document.getElementById("paidBtn");
+  try {
 
-if (!paidBtn) {
-  console.error("paidBtn not found");
-} else {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/payments`,
+      {
+        method: "POST",
 
-  paidBtn.addEventListener(
-    "click",
-    async () => {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal"
+        },
 
-      paidBtn.disabled = true;
-      paidBtn.textContent = "Sending...";
-
-      try {
-
-        const response = await fetch(
-          `${SUPABASE_URL}/rest/v1/payments`,
-          {
-            method: "POST",
-
-            headers: {
-              apikey: SUPABASE_KEY,
-
-              Authorization:
-                `Bearer ${SUPABASE_KEY}`,
-
-              "Content-Type":
-                "application/json",
-
-              Prefer:
-                "return=minimal"
-            },
-
-            body: JSON.stringify({
-
-              telegram_id:
-                Number(user.id),
-
-              username:
-                user.username || "",
-
-              first_name:
-                user.first_name || "",
-
-              plan:
-                plan.name,
-
-              price:
-                plan.price,
-
-              status:
-                "pending"
-
-            })
-          }
-        );
-
-
-        if (!response.ok) {
-
-          const errorText =
-            await response.text();
-
-          throw new Error(errorText);
-        }
-
-
-        /*
-        --------------------------------
-        درخواست با موفقیت ثبت شد
-        --------------------------------
-        */
-
-        paidBtn.textContent =
-          "Payment Submitted ✓";
-
-        alert(
-          "Payment request submitted successfully.\n\n" +
-          "Please wait for admin approval."
-        );
-
-
-      } catch (error) {
-
-        console.error(
-          "Payment error:",
-          error
-        );
-
-        alert(
-          "Payment request failed:\n\n" +
-          error.message
-        );
-
-        paidBtn.disabled = false;
-
-        paidBtn.textContent =
-          "I've Paid";
+        body: JSON.stringify({
+          telegram_id: Number(user.id),
+          username: user.username || null,
+          first_name: user.first_name || null,
+          plan: plan.name,
+          price: plan.price,
+          status: "pending"
+        })
       }
+    );
 
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(error);
     }
-  );
 
-}
+    paidBtn.textContent = "Payment Submitted ✓";
+
+    alert(
+      "Payment request submitted successfully.\n\n" +
+      "Please wait for admin approval."
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Payment request failed:\n\n" +
+      error.message
+    );
+
+    paidBtn.disabled = false;
+    paidBtn.textContent = "I've Paid";
+  }
+
+});
