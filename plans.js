@@ -7,17 +7,8 @@ tg?.expand();
 
 const user = tg?.initDataUnsafe?.user;
 
-const prices = {
-  Basic: 130,
-  Starter: 320,
-  Pro: 599,
-  Advanced: 540,
-  Premium: 860,
-  Elite: 860,
-  VIP: 1040
-};
-
 const planData = {
+
   Basic: {
     price: 130,
     hashrate: 120,
@@ -66,120 +57,214 @@ const planData = {
     duration: 90,
     daily: "0.00150 BTC"
   }
+
 };
 
-const $ = (id) => document.getElementById(id);
 
-const planSelect = $("plan");
-const buyBtn = $("buy");
-const msg = $("msg");
+const msg = document.getElementById("msg");
 
 const headers = {
+
   apikey: SUPABASE_KEY,
-  Authorization: `Bearer ${SUPABASE_KEY}`,
-  "Content-Type": "application/json"
+
+  Authorization:
+    `Bearer ${SUPABASE_KEY}`,
+
+  "Content-Type":
+    "application/json"
+
 };
+
 
 async function api(path, options = {}) {
 
   const response = await fetch(
+
     `${SUPABASE_URL}/rest/v1/${path}`,
+
     {
       ...options,
+
       headers: {
+
         ...headers,
+
         ...(options.headers || {})
+
       }
+
     }
+
   );
 
-  const text = await response.text();
+
+  const text =
+    await response.text();
+
 
   let data = null;
 
+
   try {
-    data = text ? JSON.parse(text) : null;
+
+    data =
+      text ? JSON.parse(text) : null;
+
   } catch {
+
     data = text;
+
   }
 
+
   if (!response.ok) {
+
     throw new Error(
+
       data?.message ||
       data?.hint ||
       text ||
       `HTTP ${response.status}`
+
     );
+
   }
 
+
   return data;
+
 }
 
 
 async function submitPayment(plan) {
 
   if (!user?.id) {
-    throw new Error("Telegram user not detected");
+
+    throw new Error(
+      "Telegram user not detected"
+    );
+
   }
 
-  const info = planData[plan];
+
+  const info =
+    planData[plan];
+
 
   if (!info) {
-    throw new Error("Invalid plan");
+
+    throw new Error(
+      "Invalid plan"
+    );
+
   }
 
+
   await api(
+
     "payments",
+
     {
+
       method: "POST",
 
       headers: {
-        Prefer: "return=minimal"
+
+        Prefer:
+          "return=minimal"
+
       },
 
       body: JSON.stringify({
-        telegram_id: Number(user.id),
-        username: user.username || "",
-        first_name: user.first_name || "",
-        plan: plan,
-        price: info.price,
-        status: "pending"
+
+        telegram_id:
+          Number(user.id),
+
+        username:
+          user.username || "",
+
+        first_name:
+          user.first_name || "",
+
+        plan:
+          plan,
+
+        price:
+          info.price,
+
+        status:
+          "pending"
+
       })
+
     }
+
   );
+
 }
 
 
-buyBtn?.addEventListener("click", async () => {
+document
+  .querySelectorAll(".plan-buy")
+  .forEach(button => {
 
-  try {
+    button.addEventListener(
+      "click",
+      async () => {
 
-    buyBtn.disabled = true;
-    buyBtn.textContent = "Submitting...";
+        const plan =
+          button.dataset.plan;
 
-    const plan = planSelect.value;
 
-    await submitPayment(plan);
+        try {
 
-    msg.textContent =
-      "Payment request sent. Waiting for admin approval.";
+          button.disabled =
+            true;
 
-    msg.className = "ok";
+          button.textContent =
+            "Submitting...";
 
-  } catch (error) {
 
-    console.error(error);
+          await submitPayment(
+            plan
+          );
 
-    msg.textContent =
-      "Error: " + error.message;
 
-    msg.className = "bad";
+          msg.textContent =
+            `${plan} payment request sent. Waiting for admin approval.`;
 
-  } finally {
+          msg.className =
+            "ok";
 
-    buyBtn.disabled = false;
-    buyBtn.textContent = "💳 Submit Payment";
 
-  }
+        } catch (error) {
 
-});
+          console.error(
+            "Payment error:",
+            error
+          );
+
+
+          msg.textContent =
+            "Error: " +
+            error.message;
+
+          msg.className =
+            "bad";
+
+
+        } finally {
+
+          button.disabled =
+            false;
+
+          button.textContent =
+            "BUY NOW";
+
+        }
+
+      }
+
+    );
+
+  });
