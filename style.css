@@ -1,1 +1,243 @@
 *{box-sizing:border-box}body{margin:0;background:#070b0a;color:#fff;font-family:Arial,sans-serif}.container{max-width:520px;margin:auto;min-height:100vh;padding:16px 16px 90px;background:linear-gradient(#08110d,#050807)}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.brand{display:flex;align-items:center;gap:10px}.logo{width:46px;height:46px;border-radius:12px}.brand h2{margin:0;font-size:20px}.brand p{margin:4px 0 0;color:#9aa7a1;font-size:12px}.user-box{text-align:right;font-size:12px}.card,.stats>div,.miner-card,.panel{background:#0d1512;border:1px solid #1c2a24;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 8px 25px #0005}.top-card h2{font-size:14px;color:#9aa7a1;margin:0 0 10px}.top-card h1{font-size:27px;margin:0}.top-card p{color:#38ff6b;margin:8px 0 0}.actions{display:flex;gap:10px;margin-top:18px}.actions button,button{flex:1;border:0;border-radius:12px;padding:13px;background:#19b957;color:#fff;font-weight:700;cursor:pointer}.actions button:last-child{background:#18241f}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stats>div{padding:13px;text-align:center;margin:0}.stats h3{font-size:13px;margin:0 0 6px}.stats p{font-size:10px;color:#87958e;margin:0}.miner-card{text-align:center}.miner-card img{max-width:100%;height:auto}.miner-card button{margin-top:10px;background:#20c45f}.miner-card button:disabled{background:#33423b;color:#aab5af}.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);display:grid;grid-template-columns:repeat(5,1fr);background:#0b100e;border-top:1px solid #1b2923;padding:10px}.nav-item{text-decoration:none;color:#87958e;text-align:center;font-size:20px}.nav-item small{display:block;font-size:10px;margin-top:3px}.nav-item.active{color:#38ff6b}.panel h2{margin-top:0}.field{margin:10px 0}.field label{display:block;font-size:12px;color:#aab5af;margin-bottom:6px}.field input,.field select{width:100%;padding:12px;border-radius:10px;border:1px solid #26352e;background:#08100c;color:#fff}.notice{padding:12px;border-radius:10px;background:#121e18;color:#aab5af;font-size:12px;margin-bottom:12px}.row{display:flex;gap:10px}.row>*{flex:1}.item{padding:12px;border-bottom:1px solid #1d2a24;font-size:13px}.ok{color:#38ff6b}.bad{color:#ff6b6b}
+
+/* =========================
+   HASH ROOM PLANS
+========================= */
+
+.plans-page {
+  max-width: 900px;
+}
+
+.plans-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 28px;
+  margin-bottom: 30px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #0d151b, #10151d);
+  border: 1px solid #202b35;
+}
+
+.eyebrow {
+  color: #38ff9a;
+  font-size: 9px;
+  letter-spacing: 3px;
+}
+
+.plans-header h1 {
+  text-align: left;
+  color: #ffbd45;
+  margin: 10px 0;
+  font-size: 28px;
+  letter-spacing: 2px;
+}
+
+.plans-header p {
+  color: #87938e;
+  font-size: 12px;
+  max-width: 550px;
+}
+
+.network-box {
+  min-width: 150px;
+  padding: 18px;
+  border-radius: 14px;
+  background: #111923;
+  border: 1px solid #29343e;
+  text-align: center;
+}
+
+.network-box small {
+  display: block;
+  color: #7c858d;
+  font-size: 8px;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+.network-box strong {
+  color: #42ff9b;
+  font-size: 14px;
+}
+
+.plans-title {
+  color: #737c78;
+  font-size: 9px;
+  letter-spacing: 3px;
+  border-bottom: 1px solid #1c2823;
+  padding-bottom: 10px;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.plans-grid .plan-card {
+  margin: 0;
+  min-height: 285px;
+  background: #101722;
+  border: 1px solid #202c39;
+  border-radius: 16px;
+  padding: 18px;
+  text-align: left;
+  box-shadow: none;
+}
+
+.plan-card .plan-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plan-card .plan-top h2 {
+  color: #e9edf0;
+  margin: 0;
+  font-size: 15px;
+}
+
+.plan-card .plan-top span {
+  background: #ffb52e;
+  color: #111;
+  border-radius: 8px;
+  padding: 3px 7px;
+  font-size: 8px;
+  font-weight: bold;
+}
+
+.plan-card > h3 {
+  color: #ffbf4d;
+  font-size: 25px;
+  margin: 16px 0;
+}
+
+.plan-card > h3 small {
+  color: #7e878f;
+  font-size: 10px;
+  font-weight: normal;
+}
+
+.plan-info {
+  margin: 0;
+}
+
+.plan-info p {
+  display: flex;
+  justify-content: space-between;
+  margin: 9px 0;
+  font-size: 10px;
+}
+
+.plan-info p span {
+  color: #737e87;
+}
+
+.plan-info p strong {
+  color: #d8dee2;
+}
+
+.plan-info p:nth-child(2) strong {
+  color: #38d889;
+}
+
+.plan-card button {
+  width: 100%;
+  margin-top: 12px;
+  background: transparent;
+  border: 1px solid #27333d;
+  color: #aab3ba;
+  font-size: 10px;
+}
+
+.plan-card.featured {
+  border-color: #8a6928;
+  box-shadow: 0 0 22px rgba(255, 181, 45, .12);
+}
+
+.plan-card.featured button {
+  background: linear-gradient(90deg, #ffbd43, #ff9d25);
+  color: #111;
+  border: none;
+}
+
+.plan-card.basic {
+  border-left: 2px solid #95a5a6;
+}
+
+.plan-card.starter {
+  border-left: 2px solid #2ecc71;
+}
+
+.plan-card.pro {
+  border-left: 2px solid #9b59b6;
+}
+
+.plan-card.advanced {
+  border-left: 2px solid #3498db;
+}
+
+.plan-card.premium {
+  border-left: 2px solid #e74c3c;
+}
+
+.plan-card.elite {
+  border-left: 2px solid #f1c40f;
+}
+
+.plan-card.vip {
+  border-left: 2px solid #ffb300;
+}
+
+.risk-notice {
+  margin-top: 35px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #101722;
+  border: 1px solid #202c39;
+}
+
+.risk-notice strong {
+  color: #ff7777;
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+.risk-notice p {
+  color: #68737c;
+  font-size: 9px;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+@media (max-width: 700px) {
+
+  .plans-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .plans-header h1 {
+    font-size: 24px;
+  }
+
+  .network-box {
+    width: 100%;
+  }
+
+  .plans-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+@media (max-width: 430px) {
+
+  .plans-grid {
+    grid-template-columns: 1fr;
+  }
+
+  }
