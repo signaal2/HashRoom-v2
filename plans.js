@@ -2,13 +2,14 @@ import { SUPABASE_URL, SUPABASE_KEY } from "./firebase.js";
 
 const tg = window.Telegram?.WebApp;
 
-tg?.ready();
-tg?.expand();
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
 
 const user = tg?.initDataUnsafe?.user;
 
 const planData = {
-
   Basic: {
     price: 130,
     hashrate: 120,
@@ -57,214 +58,183 @@ const planData = {
     duration: 90,
     daily: "0.00150 BTC"
   }
-
 };
-
 
 const msg = document.getElementById("msg");
 
 const headers = {
-
   apikey: SUPABASE_KEY,
-
-  Authorization:
-    `Bearer ${SUPABASE_KEY}`,
-
-  "Content-Type":
-    "application/json"
-
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json"
 };
 
-
 async function api(path, options = {}) {
-
   const response = await fetch(
-
     `${SUPABASE_URL}/rest/v1/${path}`,
-
     {
       ...options,
-
       headers: {
-
         ...headers,
-
         ...(options.headers || {})
-
       }
-
     }
-
   );
 
-
-  const text =
-    await response.text();
-
+  const text = await response.text();
 
   let data = null;
 
-
   try {
-
-    data =
-      text ? JSON.parse(text) : null;
-
+    data = text ? JSON.parse(text) : null;
   } catch {
-
     data = text;
-
   }
 
-
   if (!response.ok) {
-
     throw new Error(
-
       data?.message ||
       data?.hint ||
       text ||
       `HTTP ${response.status}`
-
     );
-
   }
 
-
   return data;
-
 }
-
 
 async function submitPayment(plan) {
 
   if (!user?.id) {
-
     throw new Error(
-      "Telegram user not detected"
+      "Please open HashRoom inside Telegram."
     );
-
   }
 
-
-  const info =
-    planData[plan];
-
+  const info = planData[plan];
 
   if (!info) {
-
     throw new Error(
-      "Invalid plan"
+      "Invalid plan: " + plan
     );
-
   }
 
+  await api("payments", {
+    method: "POST",
 
-  await api(
+    headers: {
+      Prefer: "return=minimal"
+    },
 
-    "payments",
+    body: JSON.stringify({
+      telegram_id: Number(user.id),
+      username: user.username || "",
+      first_name: user.first_name || "",
+      plan: plan,
+      price: info.price,
+      status: "pending"
+    })
+  });
+}
 
-    {
+function showMessage(text, type) {
 
-      method: "POST",
+  if (!msg) return;
 
-      headers: {
+  msg.textContent = text;
+  msg.className = type || "";
+}
 
-        Prefer:
-          "return=minimal"
+function setButtonLoading(button, loading) {
 
-      },
+  if (loading) {
 
-      body: JSON.stringify({
+    button.disabled = true;
+    button.dataset.oldText = button.textContent;
+    button.textContent = "Submitting...";
 
-        telegram_id:
-          Number(user.id),
+  } else {
 
-        username:
-          user.username || "",
+    button.disabled = false;
+    button.textContent =
+      button.dataset.oldText || "BUY NOW";
 
-        first_name:
-          user.first_name || "",
-
-        plan:
-          plan,
-
-        price:
-          info.price,
-
-        status:
-          "pending"
-
-      })
-
-    }
-
-  );
-
+  }
 }
 
 
-document
-  .querySelectorAll(".plan-buy")
-  .forEach(button => {
+/*
+  همه دکمه‌های BUY NOW
+*/
 
-    button.addEventListener(
-      "click",
-      async () => {
-
-        const plan =
-          button.dataset.plan;
+const buttons =
+  document.querySelectorAll(".plan-buy");
 
 
-        try {
+buttons.forEach(button => {
 
-          button.disabled =
-            true;
+  button.addEventListener("click", async function () {
 
-          button.textContent =
-            "Submitting...";
+    const plan =
+      this.getAttribute("data-plan");
 
-
-          await submitPayment(
-            plan
-          );
-
-
-          msg.textContent =
-            `${plan} payment request sent. Waiting for admin approval.`;
-
-          msg.className =
-            "ok";
-
-
-        } catch (error) {
-
-          console.error(
-            "Payment error:",
-            error
-          );
-
-
-          msg.textContent =
-            "Error: " +
-            error.message;
-
-          msg.className =
-            "bad";
-
-
-        } finally {
-
-          button.disabled =
-            false;
-
-          button.textContent =
-            "BUY NOW";
-
-        }
-
-      }
-
+    console.log(
+      "BUY NOW clicked:",
+      plan
     );
 
+    try {
+
+      setButtonLoading(this, true);
+
+      showMessage(
+        `Submitting ${plan} payment request...`,
+        ""
+      );
+
+      await submitPayment(plan);
+
+      showMessage(
+        `${plan} payment request sent. Waiting for admin approval.`,
+        "ok"
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Payment error:",
+        error
+      );
+
+      showMessage(
+        "Error: " + error.message,
+        "bad"
+      );
+
+    } finally {
+
+      setButtonLoading(this, false);
+
+    }
+
   });
+
+});
+
+
+/*
+  بررسی اینکه دکمه‌ها واقعاً پیدا شده‌اند
+*/
+
+console.log(
+  "HashRoom Plans loaded."
+);
+
+console.log(
+  "Telegram user:",
+  user
+);
+
+console.log(
+  "BUY NOW buttons:",
+  buttons.length
+);
