@@ -3,137 +3,353 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>HashRoom Plans</title>
+<title>Hash Room Mining Plans</title>
 
 <link rel="stylesheet" href="style.css">
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 </head>
 
 <body>
 
-<div class="container">
+<div class="container plans-page">
 
-<header class="header">
-
-<div class="brand">
-
-<img
-src="assets/images/logo.png"
-class="logo"
-alt="HashRoom">
+<header class="plans-header">
 
 <div>
+<span class="eyebrow">BITCOIN CLOUD MINING</span>
 
-<h2>HASH ROOM</h2>
+<h1>HASH ROOM MINING PLANS</h1>
 
-<p>Choose your mining plan</p>
-
+<p>
+Seven contracts, ranging hashrate, term, and daily yield —
+pick the one that fits your capital.
+</p>
 </div>
 
+<div class="network-box">
+<small>NETWORK</small>
+<strong>SHA-256 • BTC</strong>
 </div>
 
 </header>
 
 
-<div class="card">
+<div class="plans-title">
+07 PLANS
+</div>
 
-<div class="top-card">
 
-<h2>⛏ Cloud Mining Plans</h2>
+<div class="plans-grid">
+
+
+<!-- BASIC -->
+
+<div class="plan-card basic">
+
+<div class="plan-top">
+<h2>Basic</h2>
+<span>30D</span>
+</div>
+
+<h3>120 <small>TH/s</small></h3>
+
+<div class="plan-info">
 
 <p>
-Choose your plan and submit your payment request.
+<span>Duration</span>
+<strong>30 Days</strong>
+</p>
+
+<p>
+<span>Price</span>
+<strong>$130</strong>
+</p>
+
+<p>
+<span>Daily Output</span>
+<strong>0.00031 BTC</strong>
+</p>
+
+<p>
+<span>Capital Return</span>
+<strong>12–15 Days</strong>
 </p>
 
 </div>
 
-
-<div class="field">
-
-<label for="plan">
-Select Plan
-</label>
-
-<select id="plan">
-
-<option value="Basic">
-Basic — $100
-</option>
-
-<option value="Pro">
-Pro — $250
-</option>
-
-<option value="VIP">
-VIP — $500
-</option>
-
-</select>
-
-</div>
-
-
-<div class="stats">
-
-<div>
-
-<h3>$100</h3>
-
-<p>Basic</p>
-
-</div>
-
-<div>
-
-<h3>$250</h3>
-
-<p>Pro</p>
-
-</div>
-
-<div>
-
-<h3>$500</h3>
-
-<p>VIP</p>
-
-</div>
-
-</div>
-
-
-<button id="buy">
-💳 Submit Payment
+<button onclick="location.href='payment.html?plan=basic'">
+BUY NOW
 </button>
 
+</div>
 
-<p id="msg"></p>
+
+<!-- STARTER -->
+
+<div class="plan-card starter">
+
+<div class="plan-top">
+<h2>Starter</h2>
+<span>30D</span>
+</div>
+
+<h3>250 <small>TH/s</small></h3>
+
+<div class="plan-info">
+
+<p>
+<span>Duration</span>
+<strong>30 Days</strong>
+</p>
+
+<p>
+<span>Price</span>
+<strong>$320</strong>
+</p>
+
+<p>
+<span>Daily Output</span>
+<strong>0.00081 BTC</strong>
+</p>
+
+<p>
+<span>Capital Return</span>
+<strong>12–15 Days</strong>
+</p>
+
+</div>
+
+<button onclick="location.href='payment.html?plan=starter'">
+BUY NOW
+</button>
 
 </div>
 
 
-<div class="card">
+<!-- PRO -->
 
-<h3>How it works</h3>
+<div class="plan-card pro featured">
+
+<div class="plan-top">
+<h2>Pro</h2>
+<span>30D</span>
+</div>
+
+<h3>510 <small>TH/s</small></h3>
+
+<div class="plan-info">
 
 <p>
-1. Select a mining plan.
+<span>Duration</span>
+<strong>30 Days</strong>
 </p>
 
 <p>
-2. Submit your payment request.
+<span>Price</span>
+<strong>$599</strong>
 </p>
 
 <p>
-3. Admin reviews your payment.
+<span>Daily Output</span>
+<strong>0.00150 BTC</strong>
 </p>
 
 <p>
-4. After approval, Mining becomes active.
+<span>Capital Return</span>
+<strong>12–15 Days</strong>
+</p>
+
+</div>
+
+<button onclick="location.href='payment.html?plan=pro'">
+BUY NOW
+</button>
+
+</div>
+
+
+<!-- ADVANCED -->
+
+<div class="plan-card advanced">
+
+<div class="plan-top">
+<h2>Advanced</h2>
+<span>60D</span>
+</div>
+
+<h3>250 <small>TH/s</small></h3>
+
+<div class="plan-info">
+
+<p>
+<span>Duration</span>
+<strong>60 Days</strong>
+</p>
+
+<p>
+<span>Price</span>
+<strong>$540</strong>
+</p>
+
+<p>
+<span>Daily Output</span>
+<strong>0.00081 BTC</strong>
+</p>
+
+<p>
+<span>Capital Return</span>
+<strong>12–15 Days</strong>
+</p>
+
+</div>
+
+<button onclick="location.href='payment.html?plan=advanced'">
+BUY NOW
+</button>
+
+</div>
+
+
+<!-- PREMIUM -->
+
+<div class="plan-card premium featured">
+
+<div class="plan-top">
+<h2>Premium</h2>
+<span>60D</span>
+</div>
+
+<h3>510 <small>TH/s</small></h3>
+
+<div class="plan-info">
+
+<p>
+<span>Duration</span>
+<strong>60 Days</strong>
+</p>
+
+<p>
+<span>Price</span>
+<strong>$860</strong>
+</p>
+
+<p>
+<span>Daily Output</span>
+<strong>0.00150 BTC</strong>
+</p>
+
+<p>
+<span>Capital Return</span>
+<strong>12–15 Days</strong>
+</p>
+
+</div>
+
+<button onclick="location.href='payment.html?plan=premium'">
+BUY NOW
+</button>
+
+</div>
+
+
+<!-- ELITE -->
+
+<div class="plan-card elite">
+
+<div class="plan-top">
+<h2>Elite</h2>
+<span>90D</span>
+</div>
+
+<h3>250 <small>TH/s</small></h3>
+
+<div class="plan-info">
+
+<p>
+<span>Duration</span>
+<strong>90 Days</strong>
+</p>
+
+<p>
+<span>Price</span>
+<strong>$860</strong>
+</p>
+
+<p>
+<span>Daily Output</span>
+<strong>0.00081 BTC</strong>
+</p>
+
+<p>
+<span>Capital Return</span>
+<strong>12–15 Days</strong>
+</p>
+
+</div>
+
+<button onclick="location.href='payment.html?plan=elite'">
+BUY NOW
+</button>
+
+</div>
+
+
+<!-- VIP -->
+
+<div class="plan-card vip featured">
+
+<div class="plan-top">
+<h2>VIP</h2>
+<span>90D</span>
+</div>
+
+<h3>510 <small>TH/s</small></h3>
+
+<div class="plan-info">
+
+<p>
+<span>Duration</span>
+<strong>90 Days</strong>
+</p>
+
+<p>
+<span>Price</span>
+<strong>$1040</strong>
+</p>
+
+<p>
+<span>Daily Output</span>
+<strong>0.00150 BTC</strong>
+</p>
+
+<p>
+<span>Capital Return</span>
+<strong>12–15 Days</strong>
+</p>
+
+</div>
+
+<button onclick="location.href='payment.html?plan=vip'">
+BUY NOW
+</button>
+
+</div>
+
+
+</div>
+
+
+<div class="risk-notice">
+
+<strong>RISK NOTICE</strong>
+
+<p>
+Mining returns depend on BTC price, network difficulty,
+and power costs and are not guaranteed. Review company
+documentation, licensing, and withdrawal terms before investing.
 </p>
 
 </div>
@@ -142,52 +358,33 @@ VIP — $500
 <nav class="bottom-nav">
 
 <a href="index.html" class="nav-item">
-
 <span>🏠</span>
-
 <small>Home</small>
-
 </a>
 
 <a href="plans.html" class="nav-item active">
-
 <span>📦</span>
-
 <small>Plans</small>
-
 </a>
 
 <a href="mining.html" class="nav-item">
-
 <span>⛏️</span>
-
 <small>Mining</small>
-
 </a>
 
 <a href="wallet.html" class="nav-item">
-
 <span>👛</span>
-
 <small>Wallet</small>
-
 </a>
 
 <a href="referral.html" class="nav-item">
-
 <span>👥</span>
-
 <small>Referral</small>
-
 </a>
 
 </nav>
 
-
-<script type="module" src="plans.js"></script>
-
 </div>
 
 </body>
-
-</html>
+  </html>
