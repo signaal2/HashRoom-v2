@@ -106,7 +106,10 @@ async function loadPayments() {
 }
 
 async function approvePayment(paymentId) {
+
   try {
+
+    // 1. پیدا کردن پرداخت
     const payments = await api(
       `payments?id=eq.${paymentId}&select=*`
     );
@@ -118,6 +121,13 @@ async function approvePayment(paymentId) {
 
     const payment = payments[0];
 
+    // جلوگیری از تأیید دوباره
+    if (payment.status === "approved") {
+      alert("This payment is already approved.");
+      return;
+    }
+
+    // 2. پیدا کردن کاربر خریدار
     const users = await api(
       `users?telegram_id=eq.${payment.telegram_id}&select=*`
     );
@@ -125,32 +135,25 @@ async function approvePayment(paymentId) {
     let user;
 
     if (users.length) {
+
       user = users[0];
 
-      await api(
-        `users?id=eq.${user.id}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            approved: true,
-            mining: true,
-            plan: payment.plan
-          })
-        }
-      );
-
     } else {
+
+      // ساخت کاربر در صورت نبودن
       const created = await api(
         "users?select=*",
         {
           method: "POST",
+
           headers: {
             Prefer: "return=representation"
           },
+
           body: JSON.stringify({
             telegram_id: payment.telegram_id,
-            username: payment.username || null,
-            first_name: payment.first_name || null,
+            username: payment.username || "",
+            first_name: payment.first_name || "",
             balance: 0,
             approved: true,
             mining: true,
@@ -164,10 +167,38 @@ async function approvePayment(paymentId) {
       user = created[0];
     }
 
+
+    // 3. فعال کردن پلن خریدار
+
+    await api(
+      `users?id=eq.${user.id}`,
+      {
+        method: "PATCH",
+
+        headers: {
+          Prefer: "return=minimal"
+        },
+
+        body: JSON.stringify({
+          approved: true,
+          mining: true,
+          plan: payment.plan
+        })
+      }
+    );
+
+
+    // 4. تأیید پرداخت
+
     await api(
       `payments?id=eq.${paymentId}`,
       {
         method: "PATCH",
+
+        headers: {
+          Prefer: "return=minimal"
+        },
+
         body: JSON.stringify({
           status: "approved",
           approved_at: new Date().toISOString()
@@ -175,11 +206,122 @@ async function approvePayment(paymentId) {
       }
     );
 
-    alert("Plan approved ✅\nMining activated.");
 
-    await loadPayments();
+    // =====================================================
+    // 5. REFERRAL REWARD
+    // اگر خریدار معرف داشته باشد → 3 روز هدیه
+    // =====================================================
+
+    if (user.referrer) {
+
+      const referrerRows = await api(
+        `users?id=eq.${user.referrer}&select=*`
+      );
+
+      const referrer = referrerRows?.[0];
+
+      if (referrer) {
+
+        // بررسی می‌کنیم این پرداخت قبلاً پاداش داده یا نه
+
+        const existingReward = await api(
+          `referral_rewards?payment_id=eq.${paymentId}&select=id`
+        );
+
+
+        if (!existingReward?.length) {
+
+          const now = new Date();
+
+          let expiry;
+
+          if (referrer.plan_expires_at) {
+
+            expiry = new Date(
+              referrer.plan_expires_at
+            );
+
+          } else {
+
+            expiry = new Date();
+
+          }
+
+
+          // اگر پلن قبلی منقضی شده باشد
+          // از همین لحظه 3 روز حساب می‌کنیم
+
+          if (expiry < now) {
+            expiry = new Date(now);
+          }
+
+
+          // اضافه کردن 3 روز
+
+          expiry.setUTCDate(
+            expiry.getUTCDate() + 3
+          );
+
+
+          // ذخیره تاریخ جدید
+
+          await api(
+            `users?id=eq.${referrer.id}`,
+            {
+              method: "PATCH",
+
+              headers: {
+                Prefer: "return=minimal"
+              },
+
+              body: JSON.stringify({
+                plan_expires_at:
+                  expiry.toISOString()
+              })
+            }
+          );
+
+
+          // ثبت پاداش
+          // تا دوباره برای همین پرداخت داده نشود
+
+          await api(
+            "referral_rewards",
+            {
+              method: "POST",
+
+              headers: {
+                Prefer: "return=minimal"
+              },
+
+              body: JSON.stringify({
+                payment_id: paymentId,
+                referrer_id: referrer.id,
+                referred_user_id: user.id,
+                days_added: 3
+              })
+            }
+          );
+
+          console.log(
+            "Referral reward: +3 days",
+            referrer.id
+          );
+        }
+      }
+    }
+
+
+    // 6. پایان
+
+    alert(
+      "Plan approved ✅\nMining activated.\nReferral reward checked."
+    );
+
+    loadPayments();
 
   } catch (error) {
+
     console.error(error);
 
     alert(
@@ -187,34 +329,4 @@ async function approvePayment(paymentId) {
       error.message
     );
   }
-}
-
-async function rejectPayment(paymentId) {
-  try {
-    await api(
-      `payments?id=eq.${paymentId}`,
-      {
-        method: "PATCH",
-        body: JSON.stringify({
-          status: "rejected"
-        })
-      }
-    );
-
-    alert("Payment rejected.");
-
-    await loadPayments();
-
-  } catch (error) {
-    console.error(error);
-
-    alert(
-      "Reject Error:\n" +
-      error.message
-    );
-  }
-}
-
-loadPayments();
-
-setInterval(loadPayments, 10000);
+        }
