@@ -1,7 +1,7 @@
 const SUPABASE_URL =
   "https://rcftsmwuynpqrrosfkap.supabase.co";
 
-const SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_KEY = "sb_publishable_xHnveIjt43xV1tA4683_HA_qZ8sS2PC";
 
 const paymentsDiv = document.getElementById("payments");
 
