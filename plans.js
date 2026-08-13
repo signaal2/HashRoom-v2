@@ -1,5 +1,3 @@
-alert("PLANS JS LOADED");
-
 import { SUPABASE_URL, SUPABASE_KEY } from "./firebase.js";
 
 const tg = window.Telegram?.WebApp;
