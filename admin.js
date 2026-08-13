@@ -1,53 +1,47 @@
 const SUPABASE_URL =
   "https://rcftsmwuynpqrrosfkap.supabase.co";
 
-const SUPABASE_KEY = "sb_publishable_xHnveIjt43xV1tA4683_HA_qZ8sS2PC";
+const SUPABASE_KEY =
+  "sb_publishable_xHnveIjt43xV1tA4683_HA_qZ8sS2PC";
 
-const paymentsDiv = document.getElementById("payments");
+const list = document.getElementById("list");
 
 async function api(path, options = {}) {
-
   const response = await fetch(
-    SUPABASE_URL + "/rest/v1/" + path,
+    `${SUPABASE_URL}/rest/v1/${path}`,
     {
       ...options,
-
       headers: {
         apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
         "Content-Type": "application/json",
         ...(options.headers || {})
       }
     }
   );
 
+  const text = await response.text();
+
   if (!response.ok) {
-    throw new Error(await response.text());
+    throw new Error(text || `HTTP ${response.status}`);
   }
 
-  if (response.status === 204) return null;
-
-  return response.json();
+  return text ? JSON.parse(text) : null;
 }
 
 async function loadPayments() {
-
   try {
-
     const payments = await api(
       "payments?select=*&order=created_at.desc"
     );
 
-    paymentsDiv.innerHTML = "";
+    list.innerHTML = "";
 
-    if (!payments.length) {
-      paymentsDiv.innerHTML =
-        "<p>No payment requests.</p>";
+    if (!payments || !payments.length) {
+      list.innerHTML = "<p>No payment requests.</p>";
       return;
     }
 
     payments.forEach(payment => {
-
       const card = document.createElement("div");
 
       card.className = "card";
@@ -58,60 +52,61 @@ async function loadPayments() {
         <p>
           User:
           ${payment.first_name || ""}
-          ${payment.username ? "@" + payment.username : ""}
+          ${payment.username ? " @" + payment.username : ""}
         </p>
 
         <p>Telegram ID: ${payment.telegram_id}</p>
 
         <p>Price: ${payment.price} USDT</p>
 
-        <p>Status:
+        <p>
+          Status:
           <b>${payment.status}</b>
         </p>
 
         <button
-          ${payment.status !== "pending" ? "disabled" : ""}
+          class="approve-btn"
           data-id="${payment.id}"
-          class="approve-btn">
+          ${payment.status !== "pending" ? "disabled" : ""}>
           Approve
         </button>
 
         <button
-          ${payment.status !== "pending" ? "disabled" : ""}
+          class="reject-btn"
           data-id="${payment.id}"
-          class="reject-btn">
+          ${payment.status !== "pending" ? "disabled" : ""}>
           Reject
         </button>
       `;
 
-      paymentsDiv.appendChild(card);
+      list.appendChild(card);
     });
 
-    document.querySelectorAll(".approve-btn")
-      .forEach(btn => {
-        btn.onclick = () =>
-          approvePayment(btn.dataset.id);
-      });
+    document.querySelectorAll(".approve-btn").forEach(button => {
+      button.onclick = () => {
+        approvePayment(button.dataset.id);
+      };
+    });
 
-    document.querySelectorAll(".reject-btn")
-      .forEach(btn => {
-        btn.onclick = () =>
-          rejectPayment(btn.dataset.id);
-      });
+    document.querySelectorAll(".reject-btn").forEach(button => {
+      button.onclick = () => {
+        rejectPayment(button.dataset.id);
+      };
+    });
 
   } catch (error) {
-
     console.error(error);
 
-    paymentsDiv.innerHTML =
-      `<p>Error: ${error.message}</p>`;
+    list.innerHTML = `
+      <p style="color:red">
+        Error: ${error.message}
+      </p>
+    `;
   }
 }
 
 async function approvePayment(paymentId) {
-
   try {
-
     const payments = await api(
       `payments?id=eq.${paymentId}&select=*`
     );
@@ -123,10 +118,6 @@ async function approvePayment(paymentId) {
 
     const payment = payments[0];
 
-    /*
-      پیدا کردن کاربر واقعی با telegram_id
-    */
-
     const users = await api(
       `users?telegram_id=eq.${payment.telegram_id}&select=*`
     );
@@ -134,20 +125,32 @@ async function approvePayment(paymentId) {
     let user;
 
     if (users.length) {
-
       user = users[0];
 
-    } else {
+      await api(
+        `users?id=eq.${user.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            approved: true,
+            mining: true,
+            plan: payment.plan
+          })
+        }
+      );
 
+    } else {
       const created = await api(
         "users?select=*",
         {
           method: "POST",
-
+          headers: {
+            Prefer: "return=representation"
+          },
           body: JSON.stringify({
             telegram_id: payment.telegram_id,
-            username: payment.username,
-            first_name: payment.first_name,
+            username: payment.username || null,
+            first_name: payment.first_name || null,
             balance: 0,
             approved: true,
             mining: true,
@@ -161,32 +164,10 @@ async function approvePayment(paymentId) {
       user = created[0];
     }
 
-    /*
-      فعال کردن Mining
-    */
-
-    await api(
-      `users?id=eq.${user.id}`,
-      {
-        method: "PATCH",
-
-        body: JSON.stringify({
-          approved: true,
-          mining: true,
-          plan: payment.plan
-        })
-      }
-    );
-
-    /*
-      تایید پرداخت
-    */
-
     await api(
       `payments?id=eq.${paymentId}`,
       {
         method: "PATCH",
-
         body: JSON.stringify({
           status: "approved",
           approved_at: new Date().toISOString()
@@ -196,10 +177,9 @@ async function approvePayment(paymentId) {
 
     alert("Plan approved ✅\nMining activated.");
 
-    loadPayments();
+    await loadPayments();
 
   } catch (error) {
-
     console.error(error);
 
     alert(
@@ -210,14 +190,11 @@ async function approvePayment(paymentId) {
 }
 
 async function rejectPayment(paymentId) {
-
   try {
-
     await api(
       `payments?id=eq.${paymentId}`,
       {
         method: "PATCH",
-
         body: JSON.stringify({
           status: "rejected"
         })
@@ -226,9 +203,10 @@ async function rejectPayment(paymentId) {
 
     alert("Payment rejected.");
 
-    loadPayments();
+    await loadPayments();
 
   } catch (error) {
+    console.error(error);
 
     alert(
       "Reject Error:\n" +
