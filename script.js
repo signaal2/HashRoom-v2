@@ -1,12 +1,13 @@
 import { SUPABASE_URL, SUPABASE_KEY } from "./firebase.js";
 
 const tg = window.Telegram?.WebApp;
+tg?.ready();
 tg?.expand();
 
-const fallbackUser = { id: 0, first_name: "Guest", username: "" };
-const user = tg?.initDataUnsafe?.user || fallbackUser;
+const telegramUser = tg?.initDataUnsafe?.user;
 
 const $ = (id) => document.getElementById(id);
+
 const balanceEl = $("balance");
 const usdEl = $("usd");
 const startBtn = $("startBtn");
@@ -18,8 +19,25 @@ const hashrateEl = $("hashrate");
 const dailyEl = $("daily");
 const earnedEl = $("earned");
 
-if (usernameEl) usernameEl.textContent = user.first_name || user.username || "User";
-if (useridEl) useridEl.textContent = String(user.id);
+if (!telegramUser) {
+  if (statusEl) statusEl.textContent = "● Open HashRoom inside Telegram";
+  if (startBtn) {
+    startBtn.disabled = true;
+    startBtn.textContent = "Open in Telegram";
+  }
+  throw new Error("Telegram user not detected");
+}
+
+const user = telegramUser;
+
+if (usernameEl) {
+  usernameEl.textContent =
+    user.first_name || user.username || "User";
+}
+
+if (useridEl) {
+  useridEl.textContent = String(user.id);
+}
 
 let profile = null;
 let timer = null;
@@ -32,138 +50,465 @@ const headers = {
 };
 
 async function api(path, options = {}) {
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    ...options,
-    headers: { ...headers, ...(options.headers || {}) }
-  });
+
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/${path}`,
+    {
+      ...options,
+      headers: {
+        ...headers,
+        ...(options.headers || {})
+      }
+    }
+  );
+
   const text = await response.text();
+
   let data = null;
-  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-  if (!response.ok) throw new Error(data?.message || data?.hint || text || `HTTP ${response.status}`);
+
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ||
+      data?.hint ||
+      text ||
+      `HTTP ${response.status}`
+    );
+  }
+
   return data;
 }
 
+
+/* =========================
+   GET USER
+========================= */
+
 async function getUser() {
-  const rows = await api(`users?id=eq.${encodeURIComponent(user.id)}&select=*`);
+
+  const rows = await api(
+    `users?telegram_id=eq.${encodeURIComponent(user.id)}&select=*`
+  );
+
   return rows?.[0] || null;
 }
 
+
+/* =========================
+   CREATE USER
+========================= */
+
 async function createUser() {
-  const referrer = new URLSearchParams(location.search).get("ref") || null;
+
+  const referrer =
+    new URLSearchParams(location.search).get("ref") || null;
+
   const row = {
-    id: Number(user.id),
-    username: user.username || "",
-    first_name: user.first_name || "",
+
+    telegram_id: Number(user.id),
+
+    username:
+      user.username || "",
+
+    first_name:
+      user.first_name || "",
+
     balance: 0,
+
     approved: false,
+
     mining: false,
+
     plan: "",
-    referrer: referrer && /^\d+$/.test(referrer) ? Number(referrer) : null,
-    referrals: 0
+
+    referrals: 0,
+
+    referral_earned: 0,
+
+    referrer:
+      referrer && /^\d+$/.test(referrer)
+        ? Number(referrer)
+        : null
   };
-  await api("users", {
-    method: "POST",
-    headers: { Prefer: "return=minimal" },
-    body: JSON.stringify(row)
-  });
+
+  await api(
+    "users",
+    {
+      method: "POST",
+
+      headers: {
+        Prefer: "return=minimal"
+      },
+
+      body: JSON.stringify(row)
+    }
+  );
+
   return row;
 }
 
+
+/* =========================
+   SAVE USER
+========================= */
+
 async function saveUser(patch) {
-  await api(`users?id=eq.${encodeURIComponent(user.id)}`, {
-    method: "PATCH",
-    headers: { Prefer: "return=minimal" },
-    body: JSON.stringify(patch)
-  });
-  profile = { ...profile, ...patch };
+
+  await api(
+    `users?telegram_id=eq.${encodeURIComponent(user.id)}`,
+    {
+      method: "PATCH",
+
+      headers: {
+        Prefer: "return=minimal"
+      },
+
+      body: JSON.stringify(patch)
+    }
+  );
+
+  profile = {
+    ...profile,
+    ...patch
+  };
 }
 
-function render() {
-  if (!profile) return;
-  const balance = Number(profile.balance || 0);
-  const approved = Boolean(profile.approved);
-  const mining = Boolean(profile.mining);
-  const plan = profile.plan || "No Plan";
 
-  if (balanceEl) balanceEl.textContent = `${balance.toFixed(8)} BTC`;
-  if (usdEl) usdEl.textContent = `≈ $${(balance * 60000).toFixed(2)}`;
-  if (planEl) planEl.textContent = plan;
-  if (hashrateEl) hashrateEl.textContent = mining ? "100 TH/s" : "0 TH/s";
-  if (dailyEl) dailyEl.textContent = mining ? "0.00043200 BTC" : "0 BTC";
-  if (earnedEl) earnedEl.textContent = `${balance.toFixed(8)} BTC`;
+/* =========================
+   RENDER HOME
+========================= */
+
+function render() {
+
+  if (!profile) return;
+
+  const balance =
+    Number(profile.balance || 0);
+
+  const approved =
+    profile.approved === true;
+
+  const mining =
+    profile.mining === true;
+
+  const plan =
+    profile.plan || "No Plan";
+
+
+  if (balanceEl) {
+    balanceEl.textContent =
+      `${balance.toFixed(8)} BTC`;
+  }
+
+
+  if (usdEl) {
+    usdEl.textContent =
+      `≈ $${(balance * 60000).toFixed(2)}`;
+  }
+
+
+  if (planEl) {
+    planEl.textContent =
+      plan;
+  }
+
+
+  if (hashrateEl) {
+    hashrateEl.textContent =
+      mining
+        ? "100 TH/s"
+        : "0 TH/s";
+  }
+
+
+  if (dailyEl) {
+    dailyEl.textContent =
+      mining
+        ? "0.00043200 BTC"
+        : "0 BTC";
+  }
+
+
+  if (earnedEl) {
+    earnedEl.textContent =
+      `${balance.toFixed(8)} BTC`;
+  }
+
+
+  /* =========================
+     NOT APPROVED
+  ========================= */
 
   if (!approved) {
-    if (startBtn) { startBtn.disabled = true; startBtn.textContent = "Waiting Admin"; }
-    if (statusEl) statusEl.textContent = "● Waiting Admin";
+
+    if (startBtn) {
+
+      startBtn.disabled = true;
+
+      startBtn.textContent =
+        "Waiting Admin";
+    }
+
+    if (statusEl) {
+
+      statusEl.textContent =
+        "● Waiting Admin";
+    }
+
     stopTimer();
+
     return;
   }
 
-  if (startBtn) startBtn.disabled = false;
+
+  /* =========================
+     APPROVED + MINING
+  ========================= */
+
   if (mining) {
-    if (startBtn) startBtn.textContent = "⛏ Mining...";
-    if (statusEl) statusEl.textContent = "● Mining Active";
+
+    if (startBtn) {
+
+      startBtn.disabled = false;
+
+      startBtn.textContent =
+        "⛏ Mining...";
+    }
+
+    if (statusEl) {
+
+      statusEl.textContent =
+        "● Mining Active";
+    }
+
     startTimer();
-  } else {
-    if (startBtn) startBtn.textContent = "⚡ Start Mining";
-    if (statusEl) statusEl.textContent = "● Ready";
-    stopTimer();
+
+    return;
   }
+
+
+  /* =========================
+     APPROVED BUT NOT MINING
+  ========================= */
+
+  if (startBtn) {
+
+    startBtn.disabled = false;
+
+    startBtn.textContent =
+      "⚡ Start Mining";
+  }
+
+  if (statusEl) {
+
+    statusEl.textContent =
+      "● Ready";
+  }
+
+  stopTimer();
 }
+
+
+/* =========================
+   MINING TIMER
+========================= */
 
 function startTimer() {
-  if (timer || !profile?.approved || !profile?.mining) return;
-  timer = setInterval(async () => {
-    if (loading) return;
-    loading = true;
-    try {
-      const next = Number(profile.balance || 0) + 0.00000001;
-      await saveUser({ balance: next, mining: true });
-      render();
-    } catch (e) {
-      console.error("Mining update failed:", e);
-    } finally { loading = false; }
-  }, 2000);
+
+  if (
+    timer ||
+    !profile?.approved ||
+    !profile?.mining
+  ) {
+    return;
+  }
+
+
+  timer = setInterval(
+    async () => {
+
+      if (loading) return;
+
+      loading = true;
+
+      try {
+
+        const nextBalance =
+          Number(profile.balance || 0)
+          + 0.00000001;
+
+
+        await saveUser({
+
+          balance:
+            nextBalance,
+
+          mining:
+            true
+        });
+
+
+        render();
+
+      } catch (error) {
+
+        console.error(
+          "Mining update failed:",
+          error
+        );
+
+      } finally {
+
+        loading = false;
+      }
+
+    },
+    10000
+  );
 }
 
+
+/* =========================
+   STOP TIMER
+========================= */
+
 function stopTimer() {
-  if (timer) clearInterval(timer);
+
+  if (timer) {
+
+    clearInterval(timer);
+
+  }
+
   timer = null;
 }
 
+
+/* =========================
+   START / STOP MINING
+========================= */
+
 async function toggleMining() {
-  if (!profile?.approved) return;
+
+  if (!profile?.approved) {
+
+    return;
+  }
+
+
   try {
-    if (profile.mining) await saveUser({ mining: false });
-    else await saveUser({ mining: true });
+
+    await saveUser({
+
+      mining:
+        !profile.mining
+    });
+
+
     render();
-  } catch (e) {
-    console.error(e);
-    alert("Mining update failed. Check Supabase permissions.");
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert(
+      "Mining update failed:\n" +
+      error.message
+    );
   }
 }
+
+
+/* =========================
+   LOAD USER
+========================= */
 
 async function load() {
+
   try {
-    profile = await getUser();
-    if (!profile) profile = await createUser();
+
+    profile =
+      await getUser();
+
+
+    if (!profile) {
+
+      profile =
+        await createUser();
+    }
+
+
     render();
-  } catch (e) {
-    console.error(e);
-    if (statusEl) statusEl.textContent = "● Database Error";
-    if (startBtn) { startBtn.disabled = true; startBtn.textContent = "Database Error"; }
+
+  } catch (error) {
+
+    console.error(
+      "Home database error:",
+      error
+    );
+
+
+    if (statusEl) {
+
+      statusEl.textContent =
+        "● Database Error";
+    }
+
+
+    if (startBtn) {
+
+      startBtn.disabled = true;
+
+      startBtn.textContent =
+        "Database Error";
+    }
   }
 }
 
-startBtn?.addEventListener("click", toggleMining);
 
-$("depositBtn")?.addEventListener("click", () => {
-  location.href = "plans.html";
-});
+/* =========================
+   BUTTONS
+========================= */
 
-$("withdrawBtn")?.addEventListener("click", () => {
-  location.href = "wallet.html";
-});
+startBtn?.addEventListener(
+  "click",
+  toggleMining
+);
 
-window.addEventListener("pagehide", stopTimer);
+
+$("depositBtn")?.addEventListener(
+  "click",
+  () => {
+
+    location.href =
+      "plans.html";
+  }
+);
+
+
+$("withdrawBtn")?.addEventListener(
+  "click",
+  () => {
+
+    location.href =
+      "wallet.html";
+  }
+);
+
+
+window.addEventListener(
+  "pagehide",
+  stopTimer
+);
+
+
+/* =========================
+   START
+========================= */
+
 load();
