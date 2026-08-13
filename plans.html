@@ -3,43 +3,186 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
-<title>Hash Room Mining Plans</title>
+<title>HashRoom Plans</title>
 
 <link rel="stylesheet" href="style.css">
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+
+.plans-header{
+  background:#0d1512;
+  border:1px solid #1c2a24;
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:18px;
+}
+
+.plans-header h1{
+  color:#ffbd45;
+  font-size:22px;
+  margin:8px 0;
+}
+
+.plans-header p{
+  color:#87958e;
+  font-size:11px;
+  line-height:1.6;
+  margin:0;
+}
+
+.eyebrow{
+  color:#38ff6b;
+  font-size:9px;
+  letter-spacing:2px;
+}
+
+.plans-title{
+  color:#87958e;
+  font-size:10px;
+  letter-spacing:2px;
+  margin:20px 0 10px;
+}
+
+.plans-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+
+.plan-card{
+  background:#0d1512;
+  border:1px solid #1c2a24;
+  border-radius:16px;
+  padding:15px;
+  margin:0;
+}
+
+.plan-card.featured{
+  border-color:#a47727;
+  box-shadow:0 0 18px #a4772722;
+}
+
+.plan-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.plan-top h2{
+  margin:0;
+  font-size:15px;
+}
+
+.plan-top span{
+  background:#ffb83f;
+  color:#111;
+  border-radius:7px;
+  padding:3px 6px;
+  font-size:8px;
+  font-weight:bold;
+}
+
+.plan-speed{
+  color:#ffbd45;
+  font-size:24px;
+  font-weight:bold;
+  margin:14px 0;
+}
+
+.plan-speed small{
+  color:#87958e;
+  font-size:9px;
+  font-weight:normal;
+}
+
+.plan-info{
+  border-top:1px solid #1c2a24;
+  padding-top:8px;
+}
+
+.plan-info p{
+  display:flex;
+  justify-content:space-between;
+  gap:5px;
+  margin:8px 0;
+  font-size:9px;
+}
+
+.plan-info p span{
+  color:#718078;
+}
+
+.plan-info p strong{
+  color:#fff;
+}
+
+.plan-info .price{
+  color:#38ff6b;
+}
+
+.plan-buy{
+  width:100%;
+  margin-top:10px;
+  padding:10px !important;
+  background:#18241f !important;
+  border:1px solid #26352e !important;
+  color:#fff !important;
+  font-size:10px;
+}
+
+.plan-card.featured .plan-buy{
+  background:#ffb83f !important;
+  border-color:#ffb83f !important;
+  color:#111 !important;
+}
+
+#msg{
+  text-align:center;
+  font-size:12px;
+  margin:15px 0;
+}
+
+@media(max-width:390px){
+
+  .plans-grid{
+    grid-template-columns:1fr;
+  }
+
+}
+
+</style>
+
 </head>
 
 <body>
 
-<div class="container plans-page">
+<div class="container">
 
 <header class="plans-header">
 
-<div>
-<span class="eyebrow">BITCOIN CLOUD MINING</span>
+<div class="eyebrow">
+BITCOIN CLOUD MINING
+</div>
 
-<h1>HASH ROOM MINING PLANS</h1>
+<h1>
+HASH ROOM MINING PLANS
+</h1>
 
 <p>
-Seven contracts, ranging hashrate, term, and daily yield —
-pick the one that fits your capital.
+Choose your mining contract. Select a plan below and submit
+your payment request. Mining starts after admin approval.
 </p>
-</div>
-
-<div class="network-box">
-<small>NETWORK</small>
-<strong>SHA-256 • BTC</strong>
-</div>
 
 </header>
 
 
-<div class="plans-title">
+<p class="plans-title">
 07 PLANS
-</div>
+</p>
 
 
 <div class="plans-grid">
@@ -47,14 +190,19 @@ pick the one that fits your capital.
 
 <!-- BASIC -->
 
-<div class="plan-card basic">
+<div class="plan-card">
 
 <div class="plan-top">
+
 <h2>Basic</h2>
+
 <span>30D</span>
+
 </div>
 
-<h3>120 <small>TH/s</small></h3>
+<div class="plan-speed">
+120 <small>TH/s</small>
+</div>
 
 <div class="plan-info">
 
@@ -65,7 +213,7 @@ pick the one that fits your capital.
 
 <p>
 <span>Price</span>
-<strong>$130</strong>
+<strong class="price">$130</strong>
 </p>
 
 <p>
@@ -80,7 +228,9 @@ pick the one that fits your capital.
 
 </div>
 
-<button onclick="location.href='payment.html?plan=basic'">
+<button
+class="plan-buy"
+data-plan="Basic">
 BUY NOW
 </button>
 
@@ -89,14 +239,19 @@ BUY NOW
 
 <!-- STARTER -->
 
-<div class="plan-card starter">
+<div class="plan-card">
 
 <div class="plan-top">
+
 <h2>Starter</h2>
+
 <span>30D</span>
+
 </div>
 
-<h3>250 <small>TH/s</small></h3>
+<div class="plan-speed">
+250 <small>TH/s</small>
+</div>
 
 <div class="plan-info">
 
@@ -107,7 +262,7 @@ BUY NOW
 
 <p>
 <span>Price</span>
-<strong>$320</strong>
+<strong class="price">$320</strong>
 </p>
 
 <p>
@@ -122,7 +277,9 @@ BUY NOW
 
 </div>
 
-<button onclick="location.href='payment.html?plan=starter'">
+<button
+class="plan-buy"
+data-plan="Starter">
 BUY NOW
 </button>
 
@@ -131,14 +288,19 @@ BUY NOW
 
 <!-- PRO -->
 
-<div class="plan-card pro featured">
+<div class="plan-card featured">
 
 <div class="plan-top">
+
 <h2>Pro</h2>
+
 <span>30D</span>
+
 </div>
 
-<h3>510 <small>TH/s</small></h3>
+<div class="plan-speed">
+510 <small>TH/s</small>
+</div>
 
 <div class="plan-info">
 
@@ -149,7 +311,7 @@ BUY NOW
 
 <p>
 <span>Price</span>
-<strong>$599</strong>
+<strong class="price">$599</strong>
 </p>
 
 <p>
@@ -164,7 +326,9 @@ BUY NOW
 
 </div>
 
-<button onclick="location.href='payment.html?plan=pro'">
+<button
+class="plan-buy"
+data-plan="Pro">
 BUY NOW
 </button>
 
@@ -173,14 +337,19 @@ BUY NOW
 
 <!-- ADVANCED -->
 
-<div class="plan-card advanced">
+<div class="plan-card">
 
 <div class="plan-top">
+
 <h2>Advanced</h2>
+
 <span>60D</span>
+
 </div>
 
-<h3>250 <small>TH/s</small></h3>
+<div class="plan-speed">
+250 <small>TH/s</small>
+</div>
 
 <div class="plan-info">
 
@@ -191,7 +360,7 @@ BUY NOW
 
 <p>
 <span>Price</span>
-<strong>$540</strong>
+<strong class="price">$540</strong>
 </p>
 
 <p>
@@ -206,7 +375,9 @@ BUY NOW
 
 </div>
 
-<button onclick="location.href='payment.html?plan=advanced'">
+<button
+class="plan-buy"
+data-plan="Advanced">
 BUY NOW
 </button>
 
@@ -215,14 +386,19 @@ BUY NOW
 
 <!-- PREMIUM -->
 
-<div class="plan-card premium featured">
+<div class="plan-card featured">
 
 <div class="plan-top">
+
 <h2>Premium</h2>
+
 <span>60D</span>
+
 </div>
 
-<h3>510 <small>TH/s</small></h3>
+<div class="plan-speed">
+510 <small>TH/s</small>
+</div>
 
 <div class="plan-info">
 
@@ -233,7 +409,7 @@ BUY NOW
 
 <p>
 <span>Price</span>
-<strong>$860</strong>
+<strong class="price">$860</strong>
 </p>
 
 <p>
@@ -248,7 +424,9 @@ BUY NOW
 
 </div>
 
-<button onclick="location.href='payment.html?plan=premium'">
+<button
+class="plan-buy"
+data-plan="Premium">
 BUY NOW
 </button>
 
@@ -257,14 +435,19 @@ BUY NOW
 
 <!-- ELITE -->
 
-<div class="plan-card elite">
+<div class="plan-card">
 
 <div class="plan-top">
+
 <h2>Elite</h2>
+
 <span>90D</span>
+
 </div>
 
-<h3>250 <small>TH/s</small></h3>
+<div class="plan-speed">
+250 <small>TH/s</small>
+</div>
 
 <div class="plan-info">
 
@@ -275,7 +458,7 @@ BUY NOW
 
 <p>
 <span>Price</span>
-<strong>$860</strong>
+<strong class="price">$860</strong>
 </p>
 
 <p>
@@ -290,7 +473,9 @@ BUY NOW
 
 </div>
 
-<button onclick="location.href='payment.html?plan=elite'">
+<button
+class="plan-buy"
+data-plan="Elite">
 BUY NOW
 </button>
 
@@ -299,14 +484,19 @@ BUY NOW
 
 <!-- VIP -->
 
-<div class="plan-card vip featured">
+<div class="plan-card featured">
 
 <div class="plan-top">
+
 <h2>VIP</h2>
+
 <span>90D</span>
+
 </div>
 
-<h3>510 <small>TH/s</small></h3>
+<div class="plan-speed">
+510 <small>TH/s</small>
+</div>
 
 <div class="plan-info">
 
@@ -317,7 +507,7 @@ BUY NOW
 
 <p>
 <span>Price</span>
-<strong>$1040</strong>
+<strong class="price">$1040</strong>
 </p>
 
 <p>
@@ -332,59 +522,64 @@ BUY NOW
 
 </div>
 
-<button onclick="location.href='payment.html?plan=vip'">
+<button
+class="plan-buy"
+data-plan="VIP">
 BUY NOW
 </button>
 
 </div>
 
-
 </div>
 
 
-<div class="risk-notice">
-
-<strong>RISK NOTICE</strong>
-
-<p>
-Mining returns depend on BTC price, network difficulty,
-and power costs and are not guaranteed. Review company
-documentation, licensing, and withdrawal terms before investing.
-</p>
-
-</div>
+<p id="msg"></p>
 
 
 <nav class="bottom-nav">
 
 <a href="index.html" class="nav-item">
+
 <span>🏠</span>
 <small>Home</small>
+
 </a>
 
 <a href="plans.html" class="nav-item active">
+
 <span>📦</span>
 <small>Plans</small>
+
 </a>
 
 <a href="mining.html" class="nav-item">
+
 <span>⛏️</span>
 <small>Mining</small>
+
 </a>
 
 <a href="wallet.html" class="nav-item">
+
 <span>👛</span>
 <small>Wallet</small>
+
 </a>
 
 <a href="referral.html" class="nav-item">
+
 <span>👥</span>
 <small>Referral</small>
+
 </a>
 
 </nav>
 
+
+<script type="module" src="plans.js"></script>
+
 </div>
 
 </body>
+
   </html>
