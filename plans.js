@@ -1,6 +1,7 @@
 import { SUPABASE_URL, SUPABASE_KEY } from "./firebase.js";
 
 const tg = window.Telegram?.WebApp;
+
 tg?.ready();
 tg?.expand();
 
@@ -23,7 +24,6 @@ async function api(path, options = {}) {
       ...options,
       headers: {
         apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
         "Content-Type": "application/json",
         ...(options.headers || {})
       }
@@ -43,7 +43,7 @@ $("buy").onclick = async () => {
   try {
     if (!user?.id) {
       $("msg").textContent =
-        "این صفحه باید داخل Telegram WebApp باز شود.";
+        "Telegram user not detected. Open the app from Telegram.";
       $("msg").className = "bad";
       return;
     }
@@ -68,6 +68,7 @@ $("buy").onclick = async () => {
 
     $("msg").textContent =
       "Payment request sent. Waiting for admin approval.";
+
     $("msg").className = "ok";
 
   } catch (error) {
