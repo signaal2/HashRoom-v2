@@ -53,34 +53,26 @@ Start Mining
 
 </nav>
 
-<script>
+<script type="module">
 
-const SUPABASE_URL =
-"https://rcftsmwuynpqrrosfkap.supabase.co";
+import { SUPABASE_URL, SUPABASE_KEY } from "./firebase.js";
 
-const SUPABASE_KEY =
-"YOUR_SUPABASE_ANON_KEY";
+const tg = window.Telegram?.WebApp;
 
-const tg = window.Telegram.WebApp;
+if (!tg) {
+  document.getElementById("status").textContent =
+    "Open HashRoom inside Telegram";
+  throw new Error("Telegram WebApp not found");
+}
 
 tg.ready();
 tg.expand();
 
-const user = tg.initDataUnsafe.user;
+const user = tg.initDataUnsafe?.user;
 
-if (!user) {
-  alert("Open HashRoom inside Telegram");
-  throw new Error("Telegram user not found");
-}
-
-const statusEl =
-document.getElementById("status");
-
-const balanceEl =
-document.getElementById("balance");
-
-const startBtn =
-document.getElementById("startBtn");
+const statusEl = document.getElementById("status");
+const balanceEl = document.getElementById("balance");
+const startBtn = document.getElementById("startBtn");
 
 let timer = null;
 
@@ -91,14 +83,14 @@ async function getUser() {
     {
       headers: {
         apikey: SUPABASE_KEY,
-        Authorization:
-          `Bearer ${SUPABASE_KEY}`
+        Authorization: `Bearer ${SUPABASE_KEY}`
       }
     }
   );
 
-  if (!response.ok)
+  if (!response.ok) {
     throw new Error(await response.text());
+  }
 
   const users = await response.json();
 
@@ -107,63 +99,87 @@ async function getUser() {
 
 async function saveBalance(balance) {
 
-  await fetch(
+  const response = await fetch(
     `${SUPABASE_URL}/rest/v1/users?telegram_id=eq.${user.id}`,
     {
       method: "PATCH",
-
       headers: {
         apikey: SUPABASE_KEY,
-        Authorization:
-          `Bearer ${SUPABASE_KEY}`,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
         "Content-Type": "application/json",
         Prefer: "return=minimal"
       },
-
       body: JSON.stringify({
         balance: balance
       })
     }
   );
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
 }
 
 async function checkMining() {
 
-  const data = await getUser();
+  try {
 
-  if (!data) {
+    if (!user?.id) {
+      statusEl.textContent =
+        "Telegram user not detected.";
+      startBtn.disabled = true;
+      return;
+    }
+
+    statusEl.textContent = "Checking...";
+
+    const data = await getUser();
+
+    if (!data) {
+
+      statusEl.textContent =
+        "User not found in database.";
+
+      startBtn.disabled = true;
+      return;
+    }
+
+    balanceEl.textContent =
+      Number(data.balance || 0).toFixed(8) + " BTC";
+
+    if (data.approved === true && data.mining === true) {
+
+      statusEl.textContent =
+        "🟢 Mining Active";
+
+      startBtn.textContent =
+        "Mining...";
+
+      startBtn.disabled = true;
+
+      startMining(data);
+
+    } else if (data.approved === true) {
+
+      statusEl.textContent =
+        "🟡 Approved — Mining inactive";
+
+      startBtn.disabled = false;
+
+    } else {
+
+      statusEl.textContent =
+        "🟡 Waiting for admin approval";
+
+      startBtn.disabled = true;
+    }
+
+  } catch (error) {
+
+    console.error(error);
 
     statusEl.textContent =
-      "User not registered yet";
-
-    startBtn.disabled = true;
-
-    return;
-  }
-
-  balanceEl.textContent =
-    Number(data.balance || 0)
-      .toFixed(8) + " BTC";
-
-  if (
-    data.approved === true &&
-    data.mining === true
-  ) {
-
-    statusEl.textContent =
-      "🟢 Mining Active";
-
-    startBtn.textContent =
-      "Mining...";
-
-    startBtn.disabled = true;
-
-    startMining(data);
-
-  } else {
-
-    statusEl.textContent =
-      "🟡 Waiting for admin approval";
+      "Database error: " + error.message;
 
     startBtn.disabled = true;
   }
@@ -178,28 +194,25 @@ function startMining(data) {
 
   timer = setInterval(async () => {
 
-    /*
-      مقدار کوچک آزمایشی برای نمایش Mining.
-      برای استخراج واقعی باید منبع درآمد واقعی
-      و سیستم پرداخت/تسویه مستقل اضافه شود.
-    */
-
     balance += 0.00000001;
 
     balanceEl.textContent =
       balance.toFixed(8) + " BTC";
 
-    await saveBalance(balance);
+    try {
+      await saveBalance(balance);
+    } catch (error) {
+      console.error("Balance update error:", error);
+    }
 
   }, 10000);
 }
 
-startBtn.onclick =
-checkMining;
+startBtn.onclick = checkMining;
 
 checkMining();
 
-</script>
+    </script>
 
 </body>
   </html>
