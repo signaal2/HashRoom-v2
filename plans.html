@@ -154,6 +154,123 @@
 
 }
 
+  <style>
+.hr-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0,0,0,.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.hr-payment-box {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #0d1512;
+  border: 1px solid #2a3b32;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 15px 50px #000;
+}
+
+.hr-payment-box h2 {
+  margin: 0 30px 12px 0;
+  color: #ffbd45;
+}
+
+.hr-price {
+  color: #fff;
+}
+
+.hr-price strong {
+  color: #38ff6b;
+}
+
+.hr-warning {
+  background: #201b0d;
+  border: 1px solid #5b4820;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 15px 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.hr-wallet {
+  background: #08100c;
+  border: 1px solid #26352e;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 12px 0;
+}
+
+.hr-wallet-title {
+  color: #38ff6b;
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.hr-address {
+  word-break: break-all;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #fff;
+  background: #050907;
+  padding: 9px;
+  border-radius: 8px;
+}
+
+.hr-copy {
+  margin-top: 8px;
+  width: 100%;
+  padding: 9px;
+  border: 0;
+  border-radius: 9px;
+  background: #18241f;
+  color: #38ff6b;
+  font-weight: bold;
+}
+
+.hr-paid {
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px;
+  border: 0;
+  border-radius: 11px;
+  background: #20c45f;
+  color: #fff;
+  font-weight: bold;
+}
+
+.hr-paid:disabled {
+  opacity: .6;
+}
+
+.hr-close {
+  position: absolute;
+  right: 15px;
+  top: 10px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 30px;
+}
+
+.hr-note {
+  color: #87958e;
+  font-size: 11px;
+  line-height: 1.6;
+}
+</style>
+
 </style>
 
 </head>
