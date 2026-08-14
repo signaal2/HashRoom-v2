@@ -1,13 +1,14 @@
-import { SUPABASE_URL, SUPABASE_KEY } from "./firebase.js";
+import {
+  SUPABASE_URL,
+  SUPABASE_KEY
+} from "./firebase.js";
 
 const tg = window.Telegram?.WebApp;
 
-if (tg) {
-  tg.ready();
-  tg.expand();
-}
+tg?.ready();
+tg?.expand();
 
-const user = tg?.initDataUnsafe?.user;
+const user = tg?.initDataUnsafe?.user || null;
 
 const planData = {
   Basic: {
@@ -60,7 +61,21 @@ const planData = {
   }
 };
 
-const msg = document.getElementById("msg");
+
+/* ==============================
+   WALLET ADDRESSES
+============================== */
+
+const USDT_ADDRESS =
+  "0x9D378cC1F4Ee18690eE591c203Ee63ff66903974";
+
+const BTC_ADDRESS =
+  "bc1qxqa5cd2vha50ytwfkcycq0nf9uh8w3cku4x48m";
+
+
+const msg =
+  document.getElementById("msg");
+
 
 const headers = {
   apikey: SUPABASE_KEY,
@@ -68,11 +83,18 @@ const headers = {
   "Content-Type": "application/json"
 };
 
+
+/* ==============================
+   SUPABASE API
+============================== */
+
 async function api(path, options = {}) {
+
   const response = await fetch(
     `${SUPABASE_URL}/rest/v1/${path}`,
     {
       ...options,
+
       headers: {
         ...headers,
         ...(options.headers || {})
@@ -80,123 +102,280 @@ async function api(path, options = {}) {
     }
   );
 
-  const text = await response.text();
+  const text =
+    await response.text();
 
   let data = null;
 
   try {
-    data = text ? JSON.parse(text) : null;
+    data =
+      text ? JSON.parse(text) : null;
   } catch {
     data = text;
   }
 
   if (!response.ok) {
+
     throw new Error(
       data?.message ||
       data?.hint ||
       text ||
       `HTTP ${response.status}`
     );
+
   }
 
   return data;
 }
 
-async function submitPayment(plan) {
 
-  if (!user?.id) {
-    throw new Error(
-      "Please open HashRoom inside Telegram."
-    );
-  }
+/* ==============================
+   MESSAGE
+============================== */
 
-  const info = planData[plan];
-
-  if (!info) {
-    throw new Error(
-      "Invalid plan: " + plan
-    );
-  }
-
-  await api("payments", {
-    method: "POST",
-
-    headers: {
-      Prefer: "return=minimal"
-    },
-
-    body: JSON.stringify({
-      telegram_id: Number(user.id),
-      username: user.username || "",
-      first_name: user.first_name || "",
-      plan: plan,
-      price: info.price,
-      status: "pending"
-    })
-  });
-}
-
-function showMessage(text, type) {
+function showMessage(
+  text,
+  type = ""
+) {
 
   if (!msg) return;
 
   msg.textContent = text;
-  msg.className = type || "";
+  msg.className = type;
+
 }
 
-function setButtonLoading(button, loading) {
 
-  if (loading) {
+/* ==============================
+   COPY ADDRESS
+============================== */
 
-    button.disabled = true;
-    button.dataset.oldText = button.textContent;
-    button.textContent = "Submitting...";
+async function copyAddress(
+  address,
+  button
+) {
 
-  } else {
+  try {
 
-    button.disabled = false;
+    await navigator.clipboard.writeText(
+      address
+    );
+
+    const old =
+      button.textContent;
+
     button.textContent =
-      button.dataset.oldText || "BUY NOW";
+      "Copied ✓";
+
+    setTimeout(() => {
+      button.textContent = old;
+    }, 1500);
+
+  } catch {
+
+    button.textContent =
+      "Copy failed";
 
   }
+
 }
 
 
-/*
-  همه دکمه‌های BUY NOW
-*/
+/* ==============================
+   PAYMENT MODAL
+============================== */
 
-const buttons =
-  document.querySelectorAll(".plan-buy");
+function showPaymentModal(plan) {
+
+  const info =
+    planData[plan];
+
+  if (!info) return;
 
 
-buttons.forEach(button => {
-
-  button.addEventListener("click", async function () {
-
-    const plan =
-      this.getAttribute("data-plan");
-
-    console.log(
-      "BUY NOW clicked:",
-      plan
+  const oldModal =
+    document.getElementById(
+      "hashroomPaymentModal"
     );
+
+  if (oldModal) {
+    oldModal.remove();
+  }
+
+
+  const modal =
+    document.createElement("div");
+
+  modal.id =
+    "hashroomPaymentModal";
+
+
+  modal.innerHTML = `
+
+    <div class="hr-modal-overlay">
+
+      <div class="hr-payment-box">
+
+        <button
+          class="hr-close"
+          id="hrClose">
+          ×
+        </button>
+
+        <h2>
+          💳 ${plan} Plan
+        </h2>
+
+        <p class="hr-price">
+          Amount:
+          <strong>
+            $${info.price} USDT
+          </strong>
+        </p>
+
+        <div class="hr-warning">
+          Send exactly
+          <strong>$${info.price} USDT</strong>
+          to one of the addresses below.
+        </div>
+
+
+        <div class="hr-wallet">
+
+          <div class="hr-wallet-title">
+            USDT BEP20
+          </div>
+
+          <div class="hr-address">
+            ${USDT_ADDRESS}
+          </div>
+
+          <button
+            class="hr-copy"
+            id="copyUsdt">
+            Copy
+          </button>
+
+        </div>
+
+
+        <div class="hr-wallet">
+
+          <div class="hr-wallet-title">
+            BTC
+          </div>
+
+          <div class="hr-address">
+            ${BTC_ADDRESS}
+          </div>
+
+          <button
+            class="hr-copy"
+            id="copyBtc">
+            Copy
+          </button>
+
+        </div>
+
+
+        <p class="hr-note">
+          After completing the payment,
+          press the button below.
+          Your request will be sent to the admin
+          for verification.
+        </p>
+
+
+        <button
+          id="hrPaid"
+          class="hr-paid">
+          ✅ I've Paid
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  document.body.appendChild(
+    modal
+  );
+
+
+  document.getElementById(
+    "hrClose"
+  ).onclick = () => {
+
+    modal.remove();
+
+  };
+
+
+  document.getElementById(
+    "copyUsdt"
+  ).onclick = function () {
+
+    copyAddress(
+      USDT_ADDRESS,
+      this
+    );
+
+  };
+
+
+  document.getElementById(
+    "copyBtc"
+  ).onclick = function () {
+
+    copyAddress(
+      BTC_ADDRESS,
+      this
+    );
+
+  };
+
+
+  document.getElementById(
+    "hrPaid"
+  ).onclick = async () => {
+
+    const button =
+      document.getElementById(
+        "hrPaid"
+      );
 
     try {
 
-      setButtonLoading(this, true);
+      if (!user?.id) {
 
-      showMessage(
-        `Submitting ${plan} payment request...`,
-        ""
+        throw new Error(
+          "Please open HashRoom inside Telegram."
+        );
+
+      }
+
+
+      button.disabled = true;
+
+      button.textContent =
+        "Sending...";
+
+
+      await submitPayment(
+        plan
       );
 
-      await submitPayment(plan);
+
+      modal.remove();
+
 
       showMessage(
         `${plan} payment request sent. Waiting for admin approval.`,
         "ok"
       );
+
 
     } catch (error) {
 
@@ -205,33 +384,134 @@ buttons.forEach(button => {
         error
       );
 
+
+      button.disabled = false;
+
+      button.textContent =
+        "✅ I've Paid";
+
+
       showMessage(
-        "Error: " + error.message,
+        "Error: " +
+        error.message,
         "bad"
       );
 
-    } finally {
-
-      setButtonLoading(this, false);
-
     }
 
-  });
+  };
 
-});
+}
 
 
-/*
-  بررسی اینکه دکمه‌ها واقعاً پیدا شده‌اند
-*/
+/* ==============================
+   SUBMIT PAYMENT
+============================== */
+
+async function submitPayment(
+  plan
+) {
+
+  if (!user?.id) {
+
+    throw new Error(
+      "Telegram user not detected."
+    );
+
+  }
+
+
+  const info =
+    planData[plan];
+
+
+  if (!info) {
+
+    throw new Error(
+      "Invalid plan."
+    );
+
+  }
+
+
+  await api(
+    "payments",
+    {
+      method: "POST",
+
+      headers: {
+        Prefer:
+          "return=minimal"
+      },
+
+      body: JSON.stringify({
+
+        telegram_id:
+          Number(user.id),
+
+        username:
+          user.username || "",
+
+        first_name:
+          user.first_name || "",
+
+        plan:
+          plan,
+
+        price:
+          info.price,
+
+        status:
+          "pending"
+
+      })
+
+    }
+  );
+
+}
+
+
+/* ==============================
+   BUY NOW BUTTONS
+============================== */
+
+const buttons =
+  document.querySelectorAll(
+    ".plan-buy"
+  );
+
+
+buttons.forEach(
+  button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        const plan =
+          button.getAttribute(
+            "data-plan"
+          );
+
+        showMessage(
+          "",
+          ""
+        );
+
+        showPaymentModal(
+          plan
+        );
+
+      }
+    );
+
+  }
+);
+
 
 console.log(
   "HashRoom Plans loaded."
-);
-
-console.log(
-  "Telegram user:",
-  user
 );
 
 console.log(
