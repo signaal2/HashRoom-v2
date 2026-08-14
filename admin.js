@@ -327,7 +327,7 @@ await api(
 
     loadPayments();
 
-  } catch (error) {
+    } catch (error) {
 
     console.error(error);
 
@@ -336,4 +336,8 @@ await api(
       error.message
     );
   }
-        }
+}
+
+loadPayments();
+
+setInterval(loadPayments, 10000);
