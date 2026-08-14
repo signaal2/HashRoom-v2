@@ -219,10 +219,21 @@ function render() {
 
 
   if (hashrateEl) {
-    hashrateEl.textContent =
-      mining
-        ? "100 TH/s"
-        : "0 TH/s";
+
+  const hashRates = {
+    Basic: "120 TH/s",
+    Starter: "250 TH/s",
+    Pro: "510 TH/s",
+    Advanced: "250 TH/s",
+    Premium: "510 TH/s",
+    Elite: "250 TH/s",
+    VIP: "510 TH/s"
+  };
+
+  hashrateEl.textContent =
+    mining
+      ? (hashRates[profile.plan] || "0 TH/s")
+      : "0 TH/s";
   }
 
 
