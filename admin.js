@@ -168,26 +168,33 @@ async function approvePayment(paymentId) {
     }
 
 
-    // 3. فعال کردن پلن خریدار
+    // 3. فعال کردن پلن + تعیین زمان اولین برداشت
+// اولین برداشت دقیقاً 7 روز بعد از تأیید فعال می‌شود.
 
-    await api(
-      `users?id=eq.${user.id}`,
-      {
-        method: "PATCH",
+const approvedAt = new Date();
 
-        headers: {
-          Prefer: "return=minimal"
-        },
+const withdrawalAvailableAt = new Date(
+  approvedAt.getTime() + 7 * 24 * 60 * 60 * 1000
+);
 
-        body: JSON.stringify({
-          approved: true,
-          mining: true,
-          plan: payment.plan
-        })
-      }
-    );
+await api(
+  `users?id=eq.${user.id}`,
+  {
+    method: "PATCH",
 
+    headers: {
+      Prefer: "return=minimal"
+    },
 
+    body: JSON.stringify({
+      approved: true,
+      mining: true,
+      plan: payment.plan,
+      withdrawal_available_at:
+        withdrawalAvailableAt.toISOString()
+    })
+  }
+);
     // 4. تأیید پرداخت
 
     await api(
